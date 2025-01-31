@@ -7,7 +7,7 @@ const Page = () => {
             justifyContent: "center",
             alignItems: "center",
         }}>
-            <Text> Profile</Text>
+            <Text> Organize filters</Text>
         </View>
     )
 }
