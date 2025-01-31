@@ -7,7 +7,7 @@ const Page = () => {
             justifyContent: "center",
             alignItems: "center",
         }}>
-            <Text> News </Text>
+            <Text> Add Requests</Text>
         </View>
     )
 }
