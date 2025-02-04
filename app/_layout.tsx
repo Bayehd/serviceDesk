@@ -2,11 +2,16 @@ import "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import CustomDrawerContent from "../components/CustomDrawerContent";
 
 const DrawerLayout = () => {
     return(
         <GestureHandlerRootView style={{ flex:1}}>
-            <Drawer drawerContent ={ CustomerDrawerContent}>
+            <Drawer drawerContent = {CustomDrawerContent}
+            screenOptions={{
+                drawerActiveBackgroundColor: " #2C539A",
+                drawerActiveTintColor: "#1c3367",
+            }}>
                 <Drawer.Screen name= "Requests" 
                 options = {{ 
                     drawerLabel : "Requests",
@@ -28,6 +33,13 @@ const DrawerLayout = () => {
                     drawerLabel : " Add Requests",
                     headerTitle : "Request Details",
                     drawerIcon: ({ size, color}) => <AntDesign name="edit" size={size} color={color} />,
+                }}
+              />
+               <Drawer.Screen name= "Settings" 
+                options = {{ 
+                    drawerLabel : " Settings",
+                    headerTitle : " Settings",
+                    drawerIcon: ({ size, color}) => <AntDesign name="setting" size={size} color={color} />,
                 }}
               />
             </Drawer>
