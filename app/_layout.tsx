@@ -30,9 +30,9 @@ const DrawerLayout = () => {
 
                 <Drawer.Screen name= "Add Requests" 
                 options = {{ 
-                    drawerLabel : " Add Requests",
+                    drawerLabel : " Add Requests", 
                     headerTitle : "Request Details",
-                    drawerIcon: ({ size, color}) => <AntDesign name="edit" size={size} color={color} />,
+                    drawerIcon: ({ size, color}) => <AntDesign name="edit"  size={size} color={color}/>,
                 }}
               />
                <Drawer.Screen name= "Settings" 
