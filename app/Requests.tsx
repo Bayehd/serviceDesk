@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 //import { DrawerActions } from "@react-navigation/native";
@@ -58,7 +58,8 @@ export default function RequestScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Opened</Text>
-        <Ionicons name="search" size={24} color="white" />
+         <Button onPress={() => console.log('button pressed')}
+            Ionicons name="search" size={24} color="white" />            
       </View>
 
       {/* Request List */}
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   requestId: { fontSize: 14, fontWeight: "bold", color: "#444" },
-  requestName: { color: "#666", fontWeight: "400" }, // Fixed font weight
+  requestName: { color: "#666", fontWeight: "400" }, 
   requestTitle: { fontSize: 16, fontWeight: "bold", marginTop: 4 },
   requestDetails: { fontSize: 13, color: "#666", marginTop: 4 },
 });
