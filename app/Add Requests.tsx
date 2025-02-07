@@ -1,8 +1,8 @@
-import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useState } from "react";
+import DropDownPicker from "react-native-dropdown-picker";
+import DatePicker from "react-native-date-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
-import DateTimePicker from "@react-native-community/datetimepicker";
 
 /*const Page = () => {
     return (
@@ -20,114 +20,140 @@ export default Page;*/
 
 export default function RequestDetailsScreen() {
     const [isEditing, setIsEditing] = useState(false);
-    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [openStatus, setOpenStatus] = useState(false);
+    const [openPriority, setOpenPriority] = useState(false);
+    const [openSite, setOpenSite] = useState(false);
+    const [openDatePicker, setOpenDatePicker] = useState(false);
+    const [openTimePicker, setOpenTimePicker] = useState(false);
+
     const [requestDetails, setRequestDetails] = useState({
         id: "11803",
         title: "Mouse not working",
         requester: "Knkansah",
-        AssignedTo: "Not Assigned",
+        assignedTo: "Not Assigned",
         status: "Open",
-        date: new Date().toISOString().split("T")[0], // Default to today's date
+        date: new Date(),
         priority: "Critical",
-        time: "Not Assigned",
-        Technician: "Jeniffer Doe",
-        site: "Accra HQ", // Default value
+        time: new Date(),
+        technician: "Jennifer Doe",
+        site: "Accra HQ",
     });
 
-    // Update field values
-    const handleChange = (field: string, value: string) => {
-        setRequestDetails((prev) => ({ ...prev, [field]: value }));
-    };
+    
+    const statusOptions = [
+        { label: "Closed", value: "Closed" },
+        { label: "On Hold", value: "On Hold" },
+        { label: "Resolved", value: "Resolved" },
+    ];
+
+    const priorityOptions = [
+        { label: "High", value: "High" },
+        { label: "Low", value: "Low" },
+        { label: "Medium", value: "Medium" },
+        { label: "Normal", value: "Normal" },
+    ];
+
+    const siteOptions = [
+        { label: "Accra HQ", value: "Accra HQ" },
+        { label: "Cotonou R&M station", value: "Cotonou R&M station" },
+        { label: "Itoki R&M station", value: "Itoki R&M station" },
+        { label: "LBCS", value: "LBCS" },
+        { label: "Lome R&M station", value: "Lome R&M station" },
+        { label: "Takoradi R&M station", value: "Takoradi R&M station" },
+        { label: "Tema R&M station", value: "Tema R&M station" },
+    ];
 
     return (
         <View style={styles.container}>
-            {/* Header */}
+           
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>{requestDetails.id} - Request ID</Text>
+                <Text style={styles.headerTitle}>{requestDetails.id} - ID</Text>
             </View>
 
             <ScrollView contentContainerStyle={styles.content}>
                 <Text style={styles.title}>{requestDetails.title}</Text>
                 <Text style={styles.subtitle}>{requestDetails.requester}</Text>
 
-                {/* Editable Fields */}
-                {Object.keys(requestDetails).map((key, index) => {
-                    if (["id", "title", "requester"].includes(key)) return null;
+            
+                <Text style={styles.label}>Status</Text>
+                <DropDownPicker
+                    open={openStatus}
+                    value={requestDetails.status}
+                    items={statusOptions}
+                    setOpen={setOpenStatus}
+                    setValue={(callback) => {
+                    const value = typeof callback === "function" ? callback(requestDetails.status) : callback;
+                    setRequestDetails((prev) => ({ ...prev, status: value }));
+                        }}
+                    style={styles.dropdown}
+                />
 
-                    return (
-                        <View key={index} style={styles.fieldContainer}>
-                            <Text style={styles.label}>{key.replace(/([A-Z])/g, " $1").trim()}</Text>
-                            
-                            {isEditing ? (
-                                key === "status" ? (
-                                    <Picker
-                                        selectedValue={requestDetails.status}
-                                        style={styles.picker}
-                                        onValueChange={(itemValue: string) => handleChange("status", itemValue)}
-                                    >
-                                        <Picker.Item label="Closed" value="Closed" />
-                                        <Picker.Item label="On Hold" value="On Hold" />
-                                        <Picker.Item label="Resolved" value="Resolved" />
-                                    </Picker>
-                                ) : key === "priority" ? (
-                                    <Picker
-                                        selectedValue={requestDetails.priority}
-                                        style={styles.picker}
-                                        onValueChange={(itemValue: string) => handleChange("priority", itemValue)}
-                                    >
-                                        <Picker.Item label="High" value="High" />
-                                        <Picker.Item label="Medium" value="Medium" />
-                                        <Picker.Item label="Normal" value="Normal" />
-                                        <Picker.Item label="Low" value="Low" />
-                                    </Picker>
-                                ) : key === "site" ? (
-                                    <Picker
-                                        selectedValue={requestDetails.site}
-                                        style={styles.picker}
-                                        onValueChange={(itemValue: string) => handleChange("site", itemValue)}
-                                    >
-                                        <Picker.Item label="Accra HQ" value="Accra HQ" />
-                                        <Picker.Item label="Cotonou R&M station" value="Cotonou R&M station" />
-                                        <Picker.Item label="Itoki R&M station" value="Itoki R&M station" />
-                                        <Picker.Item label="LBCS" value="LBCS" />
-                                        <Picker.Item label="Lome R&M station" value="Lome R&M station" />
-                                        <Picker.Item label="Takoradi R&M station" value="Takoradi R&M station" />
-                                        <Picker.Item label="Tema R&M station" value="Tema R&M station" />
-                                    </Picker>
-                                ) : key === "date" ? (
-                                    <>
-                                        <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
-                                            <Text>{requestDetails.date}</Text>
-                                        </TouchableOpacity>
-                                        {showDatePicker && (
-                                            <DateTimePicker
-                                                value={new Date(requestDetails.date)}
-                                                mode="date"
-                                                display="default"
-                                                onChange={(event: any, selectedDate: { toISOString: () => string; }) => {
-                                                    setShowDatePicker(false);
-                                                    if (selectedDate) {
-                                                        handleChange("date", selectedDate.toISOString().split("T")[0]);
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </>
-                                ) : (
-                                    <TextInput
-                                        style={styles.input}
-                                        value={requestDetails[key as keyof typeof requestDetails]}
-                                        onChangeText={(text) => handleChange(key, text)}
-                                    />
-                                )
-                            ) : (
-                                <Text style={styles.value}>{requestDetails[key as keyof typeof requestDetails]}</Text>
-                            )}
-                        </View>
-                    );
-                })}
+                <DropDownPicker
+                    open={openPriority}
+                    value={requestDetails.priority}
+                    items={priorityOptions}
+                    setOpen={setOpenPriority}
+                    setValue={(callback) => {
+                    const value = typeof callback === "function" ? callback(requestDetails.priority) : callback;
+                    setRequestDetails((prev) => ({ ...prev, priority: value }));
+                      }}
+                    style={styles.dropdown}
+                />
 
-                {/* Save Button (Visible in Edit Mode) */}
+                <DropDownPicker
+                 open={openSite}
+                  value={requestDetails.site}
+                    items={siteOptions}
+                    setOpen={setOpenSite}
+                 setValue={(callback) => {
+                     const value = typeof callback === "function" ? callback(requestDetails.site) : callback;
+                     setRequestDetails((prev) => ({ ...prev, site: value }));
+                        }}
+                    style={styles.dropdown}
+                />
+
+
+                {/* Date Picker */}
+                <Text style={styles.label}>Date</Text>
+                <TouchableOpacity
+                    style={styles.datePicker}
+                    onPress={() => setOpenDatePicker(true)}
+                >
+                    <Text style={styles.dateText}>{requestDetails.date.toDateString()}</Text>
+                </TouchableOpacity>
+                <DatePicker
+                    modal
+                    open={openDatePicker}
+                    date={requestDetails.date}
+                    mode="date"
+                    onConfirm={(date) => {
+                        setOpenDatePicker(false);
+                        setRequestDetails((prev) => ({ ...prev, date }));
+                    }}
+                    onCancel={() => setOpenDatePicker(false)}
+                />
+
+                {/* Time Picker */}
+                <Text style={styles.label}>Time</Text>
+                <TouchableOpacity
+                    style={styles.datePicker}
+                    onPress={() => setOpenTimePicker(true)}
+                >
+                    <Text style={styles.dateText}>{requestDetails.time.toLocaleTimeString()}</Text>
+                </TouchableOpacity>
+                <DatePicker
+                    modal
+                    open={openTimePicker}
+                    date={requestDetails.time}
+                    mode="time"
+                    onConfirm={(time) => {
+                        setOpenTimePicker(false);
+                        setRequestDetails((prev) => ({ ...prev, time }));
+                    }}
+                    onCancel={() => setOpenTimePicker(false)}
+                />
+
+                {/* Save Button */}
                 {isEditing && (
                     <TouchableOpacity style={styles.saveButton} onPress={() => setIsEditing(false)}>
                         <Text style={styles.saveButtonText}>Save Changes</Text>
@@ -150,31 +176,24 @@ const styles = StyleSheet.create({
     content: { padding: 15, paddingBottom: 80 },
     title: { fontSize: 18, fontWeight: "bold", marginBottom: 5 },
     subtitle: { fontSize: 14, color: "#666", marginBottom: 15 },
-    fieldContainer: { marginBottom: 10 },
-    label: { fontSize: 14, fontWeight: "bold", color: "#333" },
-    value: { fontSize: 14, color: "#555", paddingVertical: 5 },
-    input: {
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        padding: 8,
-        fontSize: 14,
-        backgroundColor: "#fff",
-    },
-    picker: {
+    label: { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 5 },
+    dropdown: {
+        marginBottom: 15,
         borderWidth: 1,
         borderColor: "#ccc",
         borderRadius: 5,
         backgroundColor: "#fff",
     },
-    dateButton: {
+    datePicker: {
+        padding: 10,
         borderWidth: 1,
         borderColor: "#ccc",
         borderRadius: 5,
-        padding: 8,
         backgroundColor: "#fff",
         alignItems: "center",
+        marginBottom: 15,
     },
+    dateText: { fontSize: 14, color: "#333" },
     saveButton: { backgroundColor: "#106ebe", padding: 12, borderRadius: 5, marginTop: 10, alignItems: "center" },
     saveButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
     editButton: {

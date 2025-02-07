@@ -28,21 +28,25 @@ export default Page;*/
 
 
 const requests = [
-  { id: "#98", name: "Andrew Woods", title: "Need to change the Location", priority: "Low", date: "21 Jul 2015, 02:30 PM" },
-  { id: "#75", name: "Demo", title: "Unable to browse", priority: "Priority not set", date: "No due date set" },
-  { id: "#71", name: "Shawn Adams", title: "Websites don't load", priority: "Priority not set", date: "No due date set" },
-  { id: "#66", name: "Guest", title: "Please provide the requested resources for the new...", priority: "Priority not set", date: "05 Jul 2013, 03:30 AM" },
-  { id: "#63", name: "Kasam", title: "Laptop is not Working", priority: "Priority not set", date: "No due date set" },
-  { id: "#61", name: "Daniel", title: "Provide the Exchange access", priority: "Priority not set", date: "No due date set" },
+  { id: "11804", name: "Kwame Opare Adufo", title: "GCMA's printer", priority: "", date: "21 Jul 2024, 02:30 PM" },
+  { id: "11805", name: "Adeyemi A. Adeola", title: "Unable to browse", priority: "Priority not set", date: "No due date set" },
+  { id: "11806", name: "Kwame Opare Adufo", title: "Mouse not working", priority: "Priority not set", date: "No due date set" },
+  { id: "11807", name: "Leonard Acquah", title: "Coreg access", priority: "low", date: "05 Jul 2013, 03:30 AM" },
+  { id: "11808", name: "Sam E. Calys Tagoe", title: "Replacement for battery", priority: "Priority not set", date: "No due date set" },
+  { id: "11809", name: "Prince T. Okutu", title: " Tema HMI values", priority: "High", date: "No due date set" },
 ];
 
 const RequestItem = ({ item }: { item: any }) => (
-  <View style={styles.requestCard}>
-    <Text style={styles.requestId}>{item.id}  •  <Text style={styles.requestName}>{item.name}</Text></Text>
-    <Text style={styles.requestTitle}>{item.title}</Text>
-    <Text style={styles.requestDetails}>{item.priority}  •  {item.date}</Text>
-  </View>
-);
+    <View style={styles.requestCard}>
+      <View style={{ flexDirection: "row" }}>
+        <Text style={styles.requestId}>{item.id} • </Text>
+        <Text style={styles.requestName}>{item.name} </Text>
+      </View>
+      <Text style={styles.requestTitle}>{item.title}</Text>
+      <Text style={styles.requestDetails}>{item.priority} • {item.date}</Text>
+    </View>
+  );
+  
 
 export default function RequestScreen() {
   return (
@@ -50,7 +54,7 @@ export default function RequestScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Opened</Text>
-        <Ionicons name="search" size={24} color="white" />
+        <Ionicons name="search" size="24" color="white" />
       </View>
 
       {/* Request List */}
