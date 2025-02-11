@@ -58,8 +58,8 @@ export default function RequestScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Opened</Text>
-         <Button onPress={() => console.log('button pressed')}
-            Ionicons name="search" size={24} color="white" />            
+         <Button title =" Search" onPress={() => console.log('button pressed')}
+             />         
       </View>
 
       {/* Request List */}

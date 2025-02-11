@@ -1,8 +1,8 @@
 import { DrawerContentScrollView, DrawerItem, DrawerItemList } from "@react-navigation/drawer";
-import { useRouter } from "expo-router";
-import { Image, View, Text, TouchableOpacity } from "react-native";
+import { useRouter, Link } from "expo-router";
+import { Image, View, Text, TouchableOpacity, Button } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ProfileImage from "../assets/Profile.png";
+import ProfileImage from "../app/assets/Profile.png";
 
 export default function CustomDrawerContent(props: any) {
     const router = useRouter();
@@ -37,13 +37,16 @@ export default function CustomDrawerContent(props: any) {
                 style={{
                     borderTopColor: "#2C539A",
                     borderTopWidth: 1,
-                    padding: 20,
-                    paddingBottom: 20 + bottom,
+                    padding: 5,
+                    paddingBottom: 10,
                 }}
-            >
-                <TouchableOpacity onPress={() => console.log("Sign Out Pressed")}>
-                    <Text style={{ fontSize: 16, fontWeight: "bold", color: "#2C539A" }}>Sign Out</Text>
-                </TouchableOpacity>
+            >   
+                <Button
+                    title="Sign Out"
+                    color="#2C539A"
+                    onPress={ () => {router.push( "../app/index")}}
+                    accessibilityLabel="Sign Out" />
+                   
             </View>
         </View>
     );
