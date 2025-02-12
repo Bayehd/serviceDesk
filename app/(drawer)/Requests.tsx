@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Button } from "react-native";
-import AntDesign from '@expo/vector-icons/AntDesign';
+import {createStackNavigator} from "@react-navigation/stack";
 import { Ionicons } from "@expo/vector-icons";
 //import { DrawerActions } from "@react-navigation/native";
 //import { useNavigation } from "expo-router";
@@ -28,7 +28,15 @@ export default Page;*/
 
 //const navigation =useNavigation();
 
+const Stack = createStackNavigator();
 
+function MyStack(){
+  return(
+    <Stack.Navigator>
+
+    </Stack.Navigator>
+  )
+}
 
 // Sample Data
 const requests = [
@@ -59,7 +67,7 @@ export default function RequestScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Opened</Text>
          <Button title =" Search" onPress={() => console.log('button pressed')}
-             /><Ionicons name="search" size={24} color="white" />
+             />
       </View>
 
       {/* Request List */}

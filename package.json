@@ -9,9 +9,11 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-community/datetimepicker": "^8.3.0",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@react-native-picker/picker": "^2.11.0",
     "@react-navigation/drawer": "^7.1.1",
+    "@react-navigation/elements": "^2.2.5",
+    "@react-navigation/stack": "^7.1.1",
     "expo": "~52.0.28",
     "expo-constants": "~17.0.5",
     "expo-linking": "~7.0.5",

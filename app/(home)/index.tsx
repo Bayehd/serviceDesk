@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
       color: 'blue',
       marginBottom: 8, 
       borderColor: 'blue',
-      justifyContent: "center"
   }
 
 })
