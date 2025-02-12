@@ -113,8 +113,8 @@ export default function RequestDetailsScreen() {
                 />
 
 
-                {/* Date Picker */}
-                <Text style={styles.label}>Date</Text>
+                {/* Date Picker*/}
+               <Text style={styles.label}>Date</Text>
                 <TouchableOpacity
                     style={styles.datePicker}
                     onPress={() => setOpenDatePicker(true)}

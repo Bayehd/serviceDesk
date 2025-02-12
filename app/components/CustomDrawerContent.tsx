@@ -1,8 +1,10 @@
 import { DrawerContentScrollView, DrawerItem, DrawerItemList } from "@react-navigation/drawer";
-import { useRouter, Link } from "expo-router";
-import { Image, View, Text, TouchableOpacity, Button } from "react-native";
+import { useRouter } from 'expo-router';
+import { Image, View, Text, Button } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ProfileImage from "../app/assets/Profile.png";
+import ProfileImage from "../assets/Profile.png";
+
+
 
 export default function CustomDrawerContent(props: any) {
     const router = useRouter();
@@ -11,25 +13,22 @@ export default function CustomDrawerContent(props: any) {
     return (
         <View style={{ flex: 1 }}>
             <DrawerContentScrollView {...props}>
-                <View style={{ padding: 20, alignItems: "center", }}>
+                <View style={{ alignItems: "center", }}>
                     <Image
                         source={ProfileImage }
                         style={{
-                            width: 80,
-                            height: 80,
+                            width: '80',
+                            height: '100',
                             borderRadius: 40,
-                            marginRight: 5,
-                           
-
+                            marginRight: 50,
                         }}
                     />
                         <Text style={{ fontSize: 16, fontWeight: "bold" }}>Benonia Ayeh</Text>
                         <Text style={{ fontSize: 14, color: "#1c3367" }}>oayeh@wagpco.com</Text>
                 </View>
 
-                {/* Drawer Items */}
                 <DrawerItemList {...props} />
-                <DrawerItem label={""} onPress={() => router.replace("/")} />
+                
             </DrawerContentScrollView>
 
             {/* Sign Out Section */}
@@ -41,12 +40,11 @@ export default function CustomDrawerContent(props: any) {
                     paddingBottom: 10,
                 }}
             >   
-                <Button
-                    title="Sign Out"
-                    color="#2C539A"
-                    onPress={ () => {router.push( "../app/index")}}
-                    accessibilityLabel="Sign Out" />
-                   
+            
+                <Button onPress={() => router.replace("/")}
+                   title="Sign Out"
+                   color="#2C539A"
+                   accessibilityLabel="Sign Out"/>
             </View>
         </View>
     );

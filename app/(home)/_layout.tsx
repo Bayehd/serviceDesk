@@ -5,7 +5,8 @@ export default function Layout() {
     <Stack>
       {/* Optionally configure static options outside the route.*/}
       <Stack.Screen name="sign" options={{headerShown: false}} />
-      <Stack.Screen name="(drawer)" options={{headerShown: false}} />
+      <Stack.Screen name="(drawer)" options={{headerShown: false}}/>
+      <Stack.Screen name="index" options={{headerShown: false}} /> 
     </Stack>
   );
 }

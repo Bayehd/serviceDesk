@@ -2,9 +2,10 @@ import "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AntDesign from '@expo/vector-icons/AntDesign';
-import CustomDrawerContent from "../../components/CustomDrawerContent";
+import CustomDrawerContent from "../components/CustomDrawerContent";
+import { StyleSheet } from "react-native";
 
-const DrawerLayout = () => {
+export default function  DrawerLayout() {
     return(
         <GestureHandlerRootView style={{ flex:1}}>
             <Drawer drawerContent = {CustomDrawerContent}
@@ -47,4 +48,6 @@ const DrawerLayout = () => {
   );
 };
 
-export default DrawerLayout;
+const styles = StyleSheet.create({
+  headerTitle: { backgroundColor: " #106ebe" },
+});
