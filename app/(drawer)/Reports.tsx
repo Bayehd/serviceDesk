@@ -6,9 +6,8 @@ const Page = () => {
             flex:1,
             justifyContent: "center",
             alignItems: "center",
-            
         }}>
-            <Text> Change Settings</Text>
+            <Text> Reports </Text>
         </View>
     )
 }

@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AntDesign from '@expo/vector-icons/AntDesign';
 import CustomDrawerContent from "../components/CustomDrawerContent";
 import { StyleSheet } from "react-native";
+import { Entypo } from "@expo/vector-icons";
 
 export default function  DrawerLayout() {
     return(
@@ -21,14 +22,6 @@ export default function  DrawerLayout() {
                 }}
               />
 
-                <Drawer.Screen name= "Organize filters" 
-                options = {{ 
-                    drawerLabel : "Organize filters",
-                    headerTitle : "Unassigned Requests",
-                    drawerIcon: ({ size, color}) => <AntDesign name="profile" size={size} color={color} />,
-                }}
-              />
-
                 <Drawer.Screen name= "Add Requests" 
                 options = {{ 
                     drawerLabel : " Add Requests", 
@@ -36,11 +29,20 @@ export default function  DrawerLayout() {
                     drawerIcon: ({ size, color}) => <AntDesign name="edit"  size={size} color={color}/>,
                 }}
               />
-               <Drawer.Screen name= "Settings" 
+
+          <Drawer.Screen name= "Reports" 
                 options = {{ 
-                    drawerLabel : " Settings",
-                    headerTitle : " Settings",
-                    drawerIcon: ({ size, color}) => <AntDesign name="setting" size={size} color={color} />,
+                    drawerLabel : "Reports",
+                    headerTitle : "Report Information",
+                    drawerIcon: ({ size, color}) => <Entypo name="news" size={size} color={color} />,
+                }}
+              />
+
+               <Drawer.Screen name= "Support" 
+                options = {{ 
+                    drawerLabel : " Support",
+                    headerTitle : "  For Support",
+                    drawerIcon: ({ size, color}) => <Entypo name="slideshare" size={size} color={color} />,
                 }}
               />
             </Drawer>

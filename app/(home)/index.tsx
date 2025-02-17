@@ -9,7 +9,7 @@ import loginImage from "../assets/loginn.png";
    const router = useRouter();
    const [email, setEmail] = useState('');
    const [password, setPassword] = useState('');
-   const [errors, setErrors] = useState('');
+   //const [errors, setErrors] = useState('');
 
    /*const validateForm = () => {
     let errors ={};
@@ -50,7 +50,8 @@ import loginImage from "../assets/loginn.png";
                }}
                 /> 
 
-        <Text style={{ color: '#106ebe' , justifyContent: "center", fontSize: 20, fontWeight: '900'}}> Service Desk</Text>
+        <Text style={{ color: '#106ebe' , justifyContent: "center",  marginBottom: 25,
+         marginLeft: "35%", fontSize: 20, fontWeight: '900'}}> Service Desk</Text>
          
             <TextInput
             style={ styles.textInput}
@@ -73,7 +74,7 @@ import loginImage from "../assets/loginn.png";
         value = {password}
         
       />
-      <View style ={{ }}>
+      <View style ={{ marginRight: 99, marginLeft: 99, borderRadius: 10 }}>
       <Button
             onPress={ () => router.push( "/(drawer)/Requests")}
             title="Sign in"
@@ -87,11 +88,16 @@ import loginImage from "../assets/loginn.png";
 
 const styles = StyleSheet.create({
   textInput:{
-    height: 40, padding: 5, 
-    fontSize: 16,
-      color: 'blue',
-      marginBottom: 8, 
-      borderColor: 'blue',
+    padding: 10, 
+    borderWidth: 1, 
+    borderColor: "#ccc", 
+    borderRadius: 5, 
+    backgroundColor: "#fff", 
+    alignItems: "center", 
+    marginBottom: 15,
+    marginTop: 8,
+    marginRight: 10,
+    marginLeft: 10,
   }
 
 })

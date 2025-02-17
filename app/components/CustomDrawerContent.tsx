@@ -43,7 +43,7 @@ export default function CustomDrawerContent(props: any) {
             
                 <Button onPress={() => router.replace("/")}
                    title="Sign Out"
-                   color="#2C539A"
+                   color="#106ebe"
                    accessibilityLabel="Sign Out"/>
             </View>
         </View>
