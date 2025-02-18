@@ -1,11 +1,9 @@
 import React, {useState} from "react";
 import { useRouter } from "expo-router";
-import { Text, Button, TextInput, Image, StyleSheet,View} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Text, Button, TextInput, Image, StyleSheet,View, KeyboardAvoidingView,} from "react-native";
 import loginImage from "../assets/loginn.png";
 import { FIREBASE_AUTH } from "../FirebaseConfig";
-import {signInWithEmailAndPassword } from   "firebase/auth"; 
-
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "firebase/auth"; 
 
  export default function Page (){
    const router = useRouter();
@@ -41,10 +39,24 @@ import {signInWithEmailAndPassword } from   "firebase/auth";
           try{
             const response = await signInWithEmailAndPassword(auth,email,password);
             console.log (response);
-            alert( "Check oyur emails!");
+            alert( "Check your emails!");
           } catch (error:any ) {
             console.log(error);
             alert( "Sign in failed: " + error.message);
+          } finally {
+            setLoading(false);
+            }
+        }
+
+        const SignUp  = async () =>{
+          setLoading (true);
+          try{
+            const response = await createUserWithEmailAndPassword(auth,email,password);
+            console.log (response);
+            alert( "Check your emails!");
+          } catch (error:any ) {
+            console.log(error);
+            alert( " account creation failed: " + error.message);
           } finally {
             setLoading(false);
             }
@@ -53,7 +65,7 @@ import {signInWithEmailAndPassword } from   "firebase/auth";
 
 
     return (
-        <SafeAreaView 
+        <KeyboardAvoidingView
                 style = {{ 
                 paddingVertical: 24,
                 flexGrow: 1,
@@ -79,7 +91,6 @@ import {signInWithEmailAndPassword } from   "firebase/auth";
                 clearButtonMode="while-editing"
                 keyboardType="email-address"
                 placeholder="username@wagpco.com"
-                placeholderTextColor="#6b7280"
                 onChangeText={text => setEmail(text)}
                 value = {email}
               />
@@ -87,8 +98,8 @@ import {signInWithEmailAndPassword } from   "firebase/auth";
                 style={ styles.textInput}
                 placeholder="enter password"
                 autoCapitalize="none"
+                secureTextEntry = {true}
                 clearButtonMode="while-editing"
-                placeholderTextColor="#6b7280"
                 onChangeText={text => setPassword(text)}
                 value = {password}
               />
@@ -99,8 +110,16 @@ import {signInWithEmailAndPassword } from   "firebase/auth";
               color="#106ebe"
               accessibilityLabel="Sign in "
               />
+
+              <Button
+              onPress= {SignUp}
+              title="Create account"
+              color="#106ebe"
+              accessibilityLabel=" Create account"
+              />
+
             </View>   
-        </SafeAreaView>
+        </KeyboardAvoidingView>
     )
 };
 
@@ -117,5 +136,4 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginLeft: 10,
   }
-
 })
