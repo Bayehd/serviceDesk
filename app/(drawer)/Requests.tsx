@@ -4,24 +4,24 @@ import { Ionicons } from "@expo/vector-icons";
 import DropDownPicker from "react-native-dropdown-picker";
 
 const initialRequests = [
-  { id: "11804", name: "Kwame Opare Adufo", title: "GCMA's printer", priority: "", date: "21 Jul 2024, 02:30 PM", status: "Open" },
-  { id: "11805", name: "Adeyemi A. Adeola", title: "Unable to browse", priority: "Priority not set", date: "No due date set", status: "Unassigned" },
-  { id: "11806", name: "Kwame Opare Adufo", title: "Mouse not working", priority: "Priority not set", date: "No due date set", status: "Open" },
-  { id: "11807", name: "Leonard Acquah", title: "Coreg access", priority: "Low", date: "05 Jul 2013, 03:30 AM", status: "Resolved" },
-  { id: "11808", name: "Sam E. Calys Tagoe", title: "Replacement for battery", priority: "Priority not set", date: "No due date set", status: "Closed" },
-  { id: "11809", name: "Prince T. Okutu", title: "Tema HMI values", priority: "High", date: "No due date set", status: "Open" },
+  { id: "11804", requester: "Oayeh", name: "Kwame Opare Adufo", title: "GCMA's printer", priority: "", date: "21 Jul 2024, 02:30 PM", status: "Open" },
+  { id: "11805", requester: "Oayeh", name: "Adeyemi A. Adeola", title: "Unable to browse", priority: "Priority not set", date: "No due date set", status: "Unassigned" },
+  { id: "11806", requester: "Oayeh", name: "Kwame Opare Adufo", title: "Mouse not working", priority: "Priority not set", date: "No due date set", status: "Open" },
+  { id: "11807", requester: "Oayeh", name: "Leonard Acquah", title: "Coreg access", priority: "Low", date: "05 Jul 2013, 03:30 AM", status: "Resolved" },
+  { id: "11808", requester: "Oayeh", name: "Sam E. Calys Tagoe", title: "Replacement for battery", priority: "Priority not set", date: "No due date set", status: "Closed" },
+  { id: "11809", requester: "Oayeh", name: "Prince T. Okutu", title: "Tema HMI values", priority: "High", date: "No due date set", status: "Open" },
 ];
 
 
 const RequestItem = ({ item }: { item: any }) => (
   <TouchableOpacity style={styles.requestCard}>
-    <View style={{ flexDirection: "row" }}>
-      <Text style={styles.requestId}>{item.id} • </Text>
-      <Text style={styles.requestName}>{item.name}</Text>
+    <View>
+      <Text style={styles.requestId}>{item.id} •  {item.requester}</Text>
     </View>
+    <Text>{item.name}</Text>
     <Text style={styles.requestTitle}>{item.title}</Text>
     <View style={styles.detailsRow}>
-      <Text style={styles.requestDetails}>{item.priority} • {item.date}</Text>
+      <Text >{item.priority} • {item.date}</Text>
       <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
         <Text style={styles.statusText}>{item.status}</Text>
       </View>
@@ -218,15 +218,12 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     fontWeight: "bold", 
     color: "#444" 
-  },
-  requestName: { 
-    color: "#666", 
-    fontWeight: "400" 
   }, 
   requestTitle: { 
     fontSize: 16, 
     fontWeight: "bold", 
-    marginTop: 4 
+    marginTop: 4,
+    color: "#106ebe",
   },
   detailsRow: {
     flexDirection: "row",
@@ -245,7 +242,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "900",
   },
   statusOpen: {
     backgroundColor: "#e3f2fd",

@@ -1,4 +1,4 @@
-import { View,StyleSheet, Text} from "react-native";
+import { Image, StyleSheet, Text} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Page = () => {
@@ -7,7 +7,17 @@ const Page = () => {
         <Text style = {style.text}>
              Call Service Desk Phone Number : " 1188 "
         </Text>
-
+        <Image
+                source= {require("../assets/support.png")}
+                style={{
+                    
+                    width: '70%',
+                    height: '55%',
+                    justifyContent: 'center',
+                    marginLeft: 60,
+                    marginTop: 40
+                  }}
+                /> 
         
        </SafeAreaView>
     )

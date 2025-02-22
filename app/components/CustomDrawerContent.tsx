@@ -1,8 +1,8 @@
-import { DrawerContentScrollView, DrawerItem, DrawerItemList } from "@react-navigation/drawer";
+import { DrawerContentScrollView, DrawerItemList } from "@react-navigation/drawer";
 import { useRouter } from 'expo-router';
-import { Image, View, Text, Button } from "react-native";
+import { Image, View, Text, Button, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ProfileImage from "../assets/Profile.png";
+
 
 
 
@@ -13,15 +13,16 @@ export default function CustomDrawerContent(props: any) {
     return (
         <View style={{ flex: 1 }}>
             <DrawerContentScrollView {...props}>
-                <View style={{ alignItems: "center", }}>
+                <View style={{ alignItems: "center"}}>
                     <Image
-                        source={ProfileImage }
+                        source={require("../assets/Profile.png")}
                         style={{
-                            width: '80',
-                            height: '100',
+                            width: 80,
+                            height: 100,
                             borderRadius: 40,
                             marginRight: 50,
                         }}
+                        
                     />
                         <Text style={{ fontSize: 16, fontWeight: "bold" }}>Benonia Ayeh</Text>
                         <Text style={{ fontSize: 14, color: "#1c3367" }}>oayeh@wagpco.com</Text>
@@ -31,7 +32,7 @@ export default function CustomDrawerContent(props: any) {
                 
             </DrawerContentScrollView>
 
-            {/* Sign Out Section */}
+           
             <View
                 style={{
                     borderTopColor: "#2C539A",
@@ -49,3 +50,4 @@ export default function CustomDrawerContent(props: any) {
         </View>
     );
 }
+

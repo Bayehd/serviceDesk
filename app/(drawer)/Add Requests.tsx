@@ -16,6 +16,7 @@ export default function RequestDetailsScreen() {
   const [requestDetails, setRequestDetails] = useState({
     id: "11803",
     technician: "",
+    requester: "Oayeh",
     Description: "Mouse not working",
     status: "Open",
     priority: "",
@@ -85,8 +86,20 @@ export default function RequestDetailsScreen() {
       </View>
 
       <View style={styles.content}>
-        <View>
+         <View>
+        <Text style={styles.label}>Requester</Text>
+          <TextInput
+            style={styles.textInput}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+            placeholderTextColor="#6b7280"
+            editable={isEditing}
+            value={requestDetails.requester}
+            onChangeText={(text) => setRequestDetails(prev => ({ ...prev, Description: text }))}
+          />
+        </View>
 
+        <View>
         <Text style={styles.label}>Description</Text>
           <TextInput
             style={styles.textInput}

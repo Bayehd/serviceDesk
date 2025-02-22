@@ -7,6 +7,7 @@ import { StyleSheet } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 
 export default function  DrawerLayout() {
+
     return(
         <GestureHandlerRootView style={{ flex:1}}>
             <Drawer drawerContent = {CustomDrawerContent}

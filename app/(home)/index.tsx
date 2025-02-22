@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import { useRouter } from "expo-router";
 import { Text, Button, TextInput, Image, StyleSheet,View, KeyboardAvoidingView,} from "react-native";
-import loginImage from "../assets/loginn.png";
 import { FIREBASE_AUTH } from "../FirebaseConfig";
 import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "firebase/auth"; 
 
@@ -33,8 +32,7 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
       }
     };
 */
-
-        const SignIn  = async () =>{
+        const signIn  = async () =>{
           setLoading (true);
           try{
             const response = await signInWithEmailAndPassword(auth,email,password);
@@ -48,7 +46,7 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
             }
         }
 
-        const SignUp  = async () =>{
+        const signUp  = async () =>{
           setLoading (true);
           try{
             const response = await createUserWithEmailAndPassword(auth,email,password);
@@ -56,12 +54,11 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
             alert( "Check your emails!");
           } catch (error:any ) {
             console.log(error);
-            alert( " account creation failed: " + error.message);
+            alert( " Accont Creation Failed: " + error.message);
           } finally {
             setLoading(false);
             }
         }
-  
 
 
     return (
@@ -73,7 +70,7 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
                 flexBasis: 0,
                 }}>
              <Image
-                source= {loginImage}
+                source= {require("../assets/loginn.png")}
                 style={{
                     width: '90%',
                     height: '35%',
@@ -84,7 +81,6 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
 
               <Text style={{ color: '#106ebe' , justifyContent: "center",  marginBottom: 25,
                 marginLeft: "35%", fontSize: 20, fontWeight: '900'}}> Service Desk</Text>
-         
               <TextInput
                 style={ styles.textInput}
                 autoCapitalize="none"
@@ -103,18 +99,19 @@ import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "fire
                 onChangeText={text => setPassword(text)}
                 value = {password}
               />
-            <View style ={{ marginRight: 99, marginLeft: 99, borderRadius: 10 }}>
+           
+            <View style ={ styles.Button}>
               <Button
-              onPress={ () => router.push( "/(drawer)/Requests")}
+              onPress={() => router.replace("/(drawer)/Requests")}
               title="Sign in"
-              color="#106ebe"
+              
               accessibilityLabel="Sign in "
               />
 
               <Button
-              onPress= {SignUp}
+              onPress= {signUp}
               title="Create account"
-              color="#106ebe"
+              
               accessibilityLabel=" Create account"
               />
 
@@ -135,5 +132,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginRight: 10,
     marginLeft: 10,
+  },
+
+  Button:{  
+    color: "#fff",
+    marginRight: 99, 
+    marginLeft: 99, 
+    borderRadius: 10
   }
 })
