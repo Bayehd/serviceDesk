@@ -1,112 +1,147 @@
-import React, { useState, useCallback } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, Platform } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import DropDownPicker from "react-native-dropdown-picker";
-
-const initialRequests = [
-  { id: "11804", requester: "Oayeh", name: "Kwame Opare Adufo", title: "GCMA's printer", priority: "", date: "21 Jul 2024, 02:30 PM", status: "Open" },
-  { id: "11805", requester: "Oayeh", name: "Adeyemi A. Adeola", title: "Unable to browse", priority: "Priority not set", date: "No due date set", status: "Unassigned" },
-  { id: "11806", requester: "Oayeh", name: "Kwame Opare Adufo", title: "Mouse not working", priority: "Priority not set", date: "No due date set", status: "Open" },
-  { id: "11807", requester: "Oayeh", name: "Leonard Acquah", title: "Coreg access", priority: "Low", date: "05 Jul 2013, 03:30 AM", status: "Resolved" },
-  { id: "11808", requester: "Oayeh", name: "Sam E. Calys Tagoe", title: "Replacement for battery", priority: "Priority not set", date: "No due date set", status: "Closed" },
-  { id: "11809", requester: "Oayeh", name: "Prince T. Okutu", title: "Tema HMI values", priority: "High", date: "No due date set", status: "Open" },
-];
+import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { db } from '../../FirebaseConfig';
 
 
-const RequestItem = ({ item }: { item: any }) => (
-  <TouchableOpacity style={styles.requestCard}>
-    <View>
-      <Text style={styles.requestId}>{item.id} •  {item.requester}</Text>
-    </View>
-    <Text>{item.name}</Text>
-    <Text style={styles.requestTitle}>{item.title}</Text>
-    <View style={styles.detailsRow}>
-      <Text >{item.priority} • {item.date}</Text>
-      <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-        <Text style={styles.statusText}>{item.status}</Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
+// Define TypeScript interfaces
 
-const getStatusStyle = (status: any) => {
-  switch (status) {
-    case 'Open':
-      return styles.statusOpen;
-    case 'Closed':
-      return styles.statusClosed;
-    case 'Resolved':
-      return styles.statusResolved;
-    case 'Unassigned':
-      return styles.statusUnassigned;
-    default:
-      return {};
-  }
-};
+
+interface Request {
+  id: string;
+  requester: string;
+  name: string;
+  title: string;
+  priority: string;
+  date: any; // Firestore Timestamp
+  status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
+}
 
 export default function RequestScreen() {
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [openFilter, setOpenFilter] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
-  const [filteredRequests, setFilteredRequests] = useState(initialRequests);
 
-  const filterOptions = [
-    { label: "All Requests", value: "All" },
-    { label: "Open Requests", value: "Open" },
-    { label: "Unassigned", value: "Unassigned" },
-    { label: "Closed/Resolved", value: "Closed" },
-  ];
 
-  const filterRequests = useCallback(() => {
-    let results = initialRequests;
+  useEffect(() => {
+    const requestsRef = collection(db, "requests");
+    const q = query(requestsRef, orderBy("date", "desc")); // Sort by latest
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedRequests: Request[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Request), // ✅ Explicitly cast Firestore data to Request type
+      }));
+  
+      setRequests(fetchedRequests);
+      setLoading(false);
+    }, (error) => {
+      setError("Failed to fetch requests");
+      console.error("Firestore Error:", error);
+      setLoading(false);
+    });
+  
+    return () => unsubscribe(); // Cleanup listener
+  }, []);
+  
 
-    // Apply status filter
-    if (selectedFilter !== "All") {
-      if (selectedFilter === "Closed") {
-        results = results.filter(request => 
-          request.status === "Closed" || request.status === "Resolved"
-        );
-      } else {
-        results = results.filter(request => request.status === selectedFilter);
-      }
+  const addRequest = async () => {
+    try {
+      const requestsRef = collection(db, 'requests');
+      const newRequest = {
+        requester: "New User",
+        name: "New Request",
+        title: "New Issue",
+        priority: "Normal",
+        date: serverTimestamp(),
+        status: "Open" as const,
+      };
+
+      await addDoc(requestsRef, newRequest);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to add request. Please try again.');
+      console.error('Add request error:', err);
     }
+  };
 
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      results = results.filter(request =>
-        request.title.toLowerCase().includes(query) ||
-        request.name.toLowerCase().includes(query) ||
-        request.id.toLowerCase().includes(query)
+  const deleteRequest = async (id: string) => {
+    try {
+      Alert.alert(
+        'Delete Request',
+        'Are you sure you want to delete this request?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              const requestRef = doc(db, 'requests', id);
+              await deleteDoc(requestRef);
+            },
+          },
+        ]
       );
+    } catch (err) {
+      Alert.alert('Error', 'Failed to delete request. Please try again.');
+      console.error('Delete request error:', err);
     }
+  };
 
-    setFilteredRequests(results);
-  }, [searchQuery, selectedFilter]);
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case 'Open':
+        return styles.statusOpen;
+      case 'Closed':
+        return styles.statusClosed;
+      case 'Resolved':
+        return styles.statusResolved;
+      case 'Unassigned':
+        return styles.statusUnassigned;
+      default:
+        return {};
+    }
+  };
 
-  React.useEffect(() => {
-    filterRequests();
-  }, [filterRequests]);
+  const filteredRequests = requests.filter((request: { title: string; name: string; status: string; }) => {
+    const matchesSearch = searchQuery.toLowerCase() === '' || 
+      request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilter = selectedFilter === 'All' || 
+      (selectedFilter === 'Closed' ? 
+        ['Closed', 'Resolved'].includes(request.status) : 
+        request.status === selectedFilter);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  if (error) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.filterContainer}>
-          <DropDownPicker
-            open={openFilter}
-            value={selectedFilter}
-            items={filterOptions}
-            setOpen={setOpenFilter}
-            setValue={setSelectedFilter}
-            style={styles.filterPicker}
-            dropDownContainerStyle={styles.dropDownContainer}
-            textStyle={styles.filterText}
-            placeholder="Filter Requests"
-          />
-        </View>
+        <Text style={styles.headerTitle}>My Opened Requests</Text>
+        <Ionicons name="search" size={24} color="white" />
       </View>
 
-      
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -115,134 +150,149 @@ export default function RequestScreen() {
           value={searchQuery}
           onChangeText={setSearchQuery}
           clearButtonMode="while-editing"
+          placeholderTextColor="#666"
         />
       </View>
 
-      
-      <FlatList
-        data={filteredRequests}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <RequestItem item={item} />}
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No requests found</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#106ebe" />
+        </View>
+      ) : (
+        
+        <FlatList
+          data={filteredRequests}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity 
+              style={styles.requestCard} 
+              onLongPress={() => deleteRequest(item.id)}
+            >
+              <View style={styles.requestHeader}>
+                <Text style={styles.requestTitle}>{item.title}</Text>
+                <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
+                  <Text style={styles.statusText}>{item.status}</Text>
+                </View>
+              </View>
+              <Text style={styles.requestDetails}>{item.name}</Text>
+              <Text style={styles.requestDetails}>Priority: {item.priority}</Text>
+              <Text style={styles.requestDate}>
+                {item.date?.toDate?.()?.toLocaleString() || 'No date'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No requests found</Text>
+            </View>
+          }
+        />
+      )}
+
+      <TouchableOpacity style={styles.addButton} onPress={addRequest}>
+        <Ionicons name="add" size={30} color="white" />
+      </TouchableOpacity>
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f5f5f5" 
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
   },
-  header: { 
-    backgroundColor: "#106ebe", 
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    backgroundColor: "#106ebe",
     padding: 15,
     paddingTop: Platform.OS === 'ios' ? 50 : 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  filterContainer: {
-    zIndex: 1000,
+  headerTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
   },
-  filterPicker: {
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: "white",
-    borderWidth: 0,
-    height: 40,
-  
-  },
-  filterText: {
-    color: "#333",
-    fontSize: 14,
-  },
-  dropDownContainer: {
-    backgroundColor: "white",
-    borderWidth: 0,
+    margin: 10,
+    padding: 10,
+    borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-    marginRight: "50%",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "white",
-    margin: 10,
-    marginLeft: "50%",
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
   },
   searchIcon: {
-    marginRight: 7,
+    marginRight: 10,
   },
   searchInput: {
     flex: 1,
-    height: 45,
+    height: 40,
     fontSize: 16,
   },
-  listContainer: { 
+  listContainer: {
     padding: 10,
-    paddingBottom: 80 
+    paddingBottom: 80,
   },
-  requestCard: { 
-    backgroundColor: "white", 
-    padding: 15, 
-    marginBottom: 10, 
+  requestCard: {
+    backgroundColor: "white",
+    padding: 15,
+    marginBottom: 10,
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
   },
-  requestId: { 
-    fontSize: 14, 
-    fontWeight: "bold", 
-    color: "#444" 
-  }, 
-  requestTitle: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    marginTop: 4,
+  requestHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  requestTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
     color: "#106ebe",
+    flex: 1,
   },
-  detailsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  requestDetails: { 
-    fontSize: 13, 
+  requestDetails: {
+    fontSize: 14,
     color: "#666",
+    marginBottom: 4,
+  },
+  requestDate: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 7,
+    borderRadius: 12,
+    marginLeft: 8,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: "900",
+    fontWeight: "600",
   },
   statusOpen: {
     backgroundColor: "#e3f2fd",
@@ -256,14 +306,50 @@ const styles = StyleSheet.create({
   statusUnassigned: {
     backgroundColor: "#fff3e0",
   },
+  addButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#106ebe",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   emptyContainer: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingTop: 40,
   },
   emptyText: {
     fontSize: 16,
     color: "#666",
+  },
+  errorText: {
+    color: '#dc3545',
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#106ebe',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

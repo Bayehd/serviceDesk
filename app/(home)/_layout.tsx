@@ -1,41 +1,28 @@
-
-import React, {useEffect, useState } from "react";
-import {Redirect, Stack} from 'expo-router';
-import auth, {FirebaseAuthTypes} from "@react-native-firebase/auth";
-import {Text} from "react-native";
+import { Slot } from 'expo-router';
 
 export default function Layout() {
+  return <Slot />; // This will automatically handle navigation
+}
 
-  /*const  { user, isLoading} = useSession();
+/*
+import { createStackNavigator } from "@react-navigation/stack";
+import { NavigationContainer } from "@react-navigation/native";
+import RequestScreen from "../(drawer)/Requests";
 
-  if (isLoading) { 
-   return(
-   <Text> loading...</Text>
-   )
-  }
-  if (!user) {
-    return < Redirect href=""/>;
-  }
-  
-  function useSession(): { user: any; isLoading: any; } {
-    throw new Error("Function not implemented.");
-  }
+const Stack = createStackNavigator();
 
-  /*const [ intializing, setInitializing] = useState(true);
-  const [user, setUser] = useState< FirebaseAuthTypes.User || null>{};
-
-  useEffect (() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
-    return subscriber;
-  },[]); */
+export default function Layout() {
   
   return (
-    <Stack>
-      <Stack.Screen name="sign" options={{headerShown: false}} />
-      <Stack.Screen name="(drawer)" options={{headerShown: false}}/>
-      <Stack.Screen name="index" options={{headerShown: false}} /> 
-    </Stack>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{headerShown: false}} /> 
+      <Stack.Screen name="(drawer)"  component ={RequestScreen }/>
+      <Stack.Screen name="(drawer)"  component ={RequestScreen }/>
+      
+    </NavigationContainer>
+
   );
 }
 
 
+//<Stack.Navigator name="sign" options={{headerShown: false}} />*/

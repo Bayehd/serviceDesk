@@ -1,143 +1,148 @@
-import React, {useState} from "react";
+import React, { useState, useEffect } from "react";
+import { Text, TextInput, Image, StyleSheet, View, KeyboardAvoidingView, TouchableOpacity, Alert } from "react-native";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
 import { useRouter } from "expo-router";
-import { Text, Button, TextInput, Image, StyleSheet,View, KeyboardAvoidingView,} from "react-native";
-import { FIREBASE_AUTH } from "../FirebaseConfig";
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword} from   "firebase/auth"; 
 
- export default function Page (){
-   const router = useRouter();
-   const [email, setEmail] = useState('');
-   const [password, setPassword] = useState('');
-   const [loading, setLoading] = useState(false);
-   const auth = FIREBASE_AUTH;
-   //const [errors, setErrors] = useState('');
+// ✅ Ensure Firebase is initialized only once
+const firebaseConfig = {
+  apiKey: "AIzaSyD1-g61TNrK0H7KjdhvQj6k3Rxr_1uhnAY",
+  authDomain: "servicedesk-10957.firebaseapp.com",
+  projectId: "servicedesk-10957",
+  storageBucket: "servicedesk-10957.firebasestorage.app",
+  messagingSenderId: "905706685008",
+  appId: "1:905706685008:web:b7007d69ed9faeb16d8755",
+  measurementId: "G-N9LF18TDV8"
+};
 
-   /*const validateForm = () => {
-    let errors ={};
+if (getApps().length === 0) {
+  initializeApp(firebaseConfig);
+}
 
-    if(!email) errors.email = "incorrect email";
-    if (!password) errors.password = " incorrect password";
+const auth = getAuth();
 
-    setErrors (errors);
+const AuthScreen = () => {
+  const router = useRouter(); // ✅ Moved inside the component
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+  const [isLogin, setIsLogin] = useState(true);
 
-    return Object.key (errors).length === 0;
-   }
- 
-    const handleSubmit= ()=>{
-      if ( validateForm()) {
-        console.log ("submitted", email ,password);
-        setEmail("");
-        setPassword("");
-        setErrors ({});
-      }
-    };
-*/
-        const signIn  = async () =>{
-          setLoading (true);
-          try{
-            const response = await signInWithEmailAndPassword(auth,email,password);
-            console.log (response);
-            alert( "Check your emails!");
-          } catch (error:any ) {
-            console.log(error);
-            alert( "Sign in failed: " + error.message);
-          } finally {
-            setLoading(false);
-            }
-        }
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return unsubscribe;
+  }, []);
 
-        const signUp  = async () =>{
-          setLoading (true);
-          try{
-            const response = await createUserWithEmailAndPassword(auth,email,password);
-            console.log (response);
-            alert( "Check your emails!");
-          } catch (error:any ) {
-            console.log(error);
-            alert( " Accont Creation Failed: " + error.message);
-          } finally {
-            setLoading(false);
-            }
-        }
+  const handleSignIn = async () => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      console.log("User signed in:", userCredential.user);
 
+      // ✅ Navigate to the request page using Expo Router
+      router.replace("/(drawer)/Requests");
+    } catch (error) {
+      Alert.alert("Login Failed", error.message); // ✅ Fixed typo `err.message`
+    }
+  };
 
-    return (
-        <KeyboardAvoidingView
-                style = {{ 
-                paddingVertical: 24,
-                flexGrow: 1,
-                flexShrink: 1,
-                flexBasis: 0,
-                }}>
-             <Image
-                source= {require("../assets/loginn.png")}
-                style={{
-                    width: '90%',
-                    height: '35%',
-                    alignSelf: 'center',
-                    marginBottom: 36,
-                  }}
-                /> 
+  const handleSignUp = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log("User created:", userCredential.user);
 
-              <Text style={{ color: '#106ebe' , justifyContent: "center",  marginBottom: 25,
-                marginLeft: "35%", fontSize: 20, fontWeight: '900'}}> Service Desk</Text>
-              <TextInput
-                style={ styles.textInput}
-                autoCapitalize="none"
-                clearButtonMode="while-editing"
-                keyboardType="email-address"
-                placeholder="username@wagpco.com"
-                onChangeText={text => setEmail(text)}
-                value = {email}
-              />
-              <TextInput
-                style={ styles.textInput}
-                placeholder="enter password"
-                autoCapitalize="none"
-                secureTextEntry = {true}
-                clearButtonMode="while-editing"
-                onChangeText={text => setPassword(text)}
-                value = {password}
-              />
-           
-            <View style ={ styles.Button}>
-              <Button
-              onPress={() => router.replace("/(drawer)/Requests")}
-              title="Sign in"
-              
-              accessibilityLabel="Sign in "
-              />
+      // ✅ Navigate after sign-up
+      router.replace("/(drawer)/request");
+    } catch (error) {
+      Alert.alert("Sign Up Failed", error.message);
+    }
+  };
 
-              <Button
-              onPress= {signUp}
-              title="Create account"
-              
-              accessibilityLabel=" Create account"
-              />
+  return (
+    <KeyboardAvoidingView style={styles.container}>
+      <Image source={require("../assets/loginn.png")} style={styles.image} />
+      
+      <Text style={styles.title}>Service Desk</Text>
 
-            </View>   
-        </KeyboardAvoidingView>
-    )
+      <TextInput
+        style={styles.textInput}
+        autoCapitalize="none"
+        keyboardType="email-address"
+        placeholder="username@wagpco.com"
+        onChangeText={setEmail}
+        value={email}
+      />
+      
+      <TextInput
+        style={styles.textInput}
+        placeholder="Enter password"
+        autoCapitalize="none"
+        secureTextEntry
+        onChangeText={setPassword}
+        value={password}
+      />
+
+      <TouchableOpacity style={styles.button} onPress={isLogin ? handleSignIn : handleSignUp}>
+        <Text style={styles.buttonText}>{isLogin ? "SIGN IN" : "CREATE ACCOUNT"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+        <Text style={styles.toggleText}>
+          {isLogin ? "Create an account? Sign Up" : "Already have an account? Sign In"}
+        </Text>
+      </TouchableOpacity>
+    </KeyboardAvoidingView>
+  );
 };
 
 const styles = StyleSheet.create({
-  textInput:{
-    padding: 10, 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 5, 
-    backgroundColor: "#fff", 
-    alignItems: "center", 
-    marginBottom: 15,
-    marginTop: 8,
-    marginRight: 10,
-    marginLeft: 10,
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#f8f9fa",
   },
-
-  Button:{  
+  image: {
+    width: "90%",
+    height: "50%",
+    resizeMode: "contain",
+  },
+  title: {
+    color: "#106ebe",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 20,
+  },
+  textInput: {
+    width: "90%",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    marginBottom: 15,
+  },
+  button: {
+    width: "90%",
+    backgroundColor: "#106ebe",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  buttonText: {
     color: "#fff",
-    marginRight: 99, 
-    marginLeft: 99, 
-    borderRadius: 10
-  }
-})
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  toggleText: {
+    color: "#106ebe",
+    fontSize: 14,
+    textDecorationLine: "underline",
+  },
+});
+
+export default AuthScreen;

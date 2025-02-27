@@ -1,149 +1,137 @@
-import { View, Text, TextInput, TouchableOpacity,ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { 
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, 
+  Platform, Alert 
+} from "react-native";
 import React, { useState } from "react";
 import DropDownPicker from "react-native-dropdown-picker";
-import DatePicker from "react-native-date-picker";
 import { Ionicons } from "@expo/vector-icons";
+import { doc, setDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../FirebaseConfig';
+import { useRouter } from 'expo-router';
 
 export default function RequestDetailsScreen() {
-  const [isEditing, setIsEditing] = useState(false);
-  const [openTechnician, SetOpenTechnician] = useState(false);
+  const router = useRouter();
+  const [isEditing, setIsEditing] = useState(true);
+  const [openTechnician, setOpenTechnician] = useState(false);
   const [openStatus, setOpenStatus] = useState(false);
   const [openPriority, setOpenPriority] = useState(false);
   const [openSite, setOpenSite] = useState(false);
-  const [openDatePicker, setOpenDatePicker] = useState(false);
-  const [openTimePicker, setOpenTimePicker] = useState(false);
 
   const [requestDetails, setRequestDetails] = useState({
-    id: "11803",
+    id: "",
     technician: "",
-    requester: "Oayeh",
-    Description: "Mouse not working",
-    status: "Open",
+    requester: "",
+    description: "",
+    status: "",
     priority: "",
     date: new Date(),
-    site: "Accra HQ",
-    time: new Date(),
+    site: "",
   });
-   
-  const technicianOptions =[
-    { label: "Abel Uche Ekwonyeaseso", value : "Abel Uche Ekwonyeaseso"},
-    { label: "Adewunmi Akinyode", value : "Adewunmi Akinyode"},
-    { label: "Adeyemi A. Adeola", value : "Adeyemi A. Adeola"},
-    { label: "Gentle Agoh", value : "Gentle Agoh"},
-    { label: "James Kudjoe Abakwam", value : "James Kudjoe Abakwam"},
-    { label: "Kamoli O. Ganiyu", value : "Kamoli O. Ganiyu"},
-    { label: "Kwame Opare Adufo", value : "Kwame Opare Adufo"},
-    { label: "Leonard Acquah", value : "Leonard Acquah"},
-    { label: "Prince T. Okutu", value : "Prince T. Okutu"},
-    { label: "Samuel E. Calys Tagoe", value : "Samuel E. Calys Tagoe"},
-    { label: "Timothy Jide Adebisi", value : "Timothy Jide Adebisi"},
-  ]
+
+  const technicianOptions = [
+    { label: "Abel Uche Ekwonyeaseso", value: "Abel Uche Ekwonyeaseso" },
+    { label: "Adewunmi Akinyode", value: "Adewunmi Akinyode" },
+    { label: "Adeyemi A. Adeola", value: "Adeyemi A. Adeola" },
+  ];
   const statusOptions = [
+    { label: "Open", value: "Open" },
     { label: "Closed", value: "Closed" },
     { label: "On Hold", value: "On Hold" },
     { label: "Resolved", value: "Resolved" },
-    { label: "Open", value: "Open" },
   ];
-
   const priorityOptions = [
     { label: "High", value: "High" },
-    { label: "Low", value: "Low" },
     { label: "Medium", value: "Medium" },
+    { label: "Low", value: "Low" },
     { label: "Normal", value: "Normal" },
   ];
-
   const siteOptions = [
     { label: "Accra HQ", value: "Accra HQ" },
-    { label: "Cotonou R&M station", value: "Cotonou R&M station" },
-    { label: "Itoki R&M station", value: "Itoki R&M station" },
-    { label: "LBCS", value: "LBCS" },
-    { label: "Lome R&M station", value: "Lome R&M station" },
-    { label: "Takoradi R&M station", value: "Takoradi R&M station" },
     { label: "Tema R&M station", value: "Tema R&M station" },
+    { label: "Cotonou R&M station", value: "Cotonou R&M station" },
   ];
 
-  const handleSaveChanges = () => {
-    setIsEditing(false);
-    SetOpenTechnician(false);
-    setOpenStatus(false);
-    setOpenPriority(false);
-    setOpenSite(false);
+  const handleSaveChanges = async () => {
+    try {
+      if (!requestDetails.requester || !requestDetails.description) {
+        Alert.alert('Error', 'Please fill in all required fields');
+        return;
+      }
 
-  };
+      let requestId = requestDetails.id || doc(collection(db, "requests")).id;
+      const requestData = {
+        ...requestDetails,
+        id: requestId,
+        date: serverTimestamp(),
+        createdAt: requestDetails.id ? requestDetails.createdAt : serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
 
-  const renderValue = (value: string, options: any[]) => {
-    const option = options.find((opt: { value: any; }) => opt.value === value);
-    return option ? option.label : value;
+      await setDoc(doc(db, "requests", requestId), requestData, { merge: true });
+
+      Alert.alert("Success", "Request saved successfully", [
+        { text: "OK", onPress: () => router.push("/requests") },
+      ]);
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving request:", error);
+      Alert.alert("Error", "Failed to save request. Please try again.");
+    }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{requestDetails.id} - ID</Text>
-      </View>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ScrollView 
+        style={styles.scrollView}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>New Request</Text>
+        </View>
 
-      <View style={styles.content}>
-         <View>
-        <Text style={styles.label}>Requester</Text>
+        <View style={styles.content}>
+          <Text style={styles.label}>Requester *</Text>
           <TextInput
             style={styles.textInput}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
-            placeholderTextColor="#6b7280"
-            editable={isEditing}
+            placeholder="Enter requester name"
             value={requestDetails.requester}
-            onChangeText={(text) => setRequestDetails(prev => ({ ...prev, Description: text }))}
+            onChangeText={(text) => setRequestDetails((prev) => ({ ...prev, requester: text }))}
           />
-        </View>
 
-        <View>
-        <Text style={styles.label}>Description</Text>
+          <Text style={styles.label}>Description *</Text>
           <TextInput
-            style={styles.textInput}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
-            placeholderTextColor="#6b7280"
-            editable={isEditing}
-            value={requestDetails.Description}
-            onChangeText={(text) => setRequestDetails(prev => ({ ...prev, Description: text }))}
+            style={[styles.textInput, styles.descriptionInput]}
+            placeholder="Enter request description"
+            multiline
+            value={requestDetails.description}
+            onChangeText={(text) => setRequestDetails((prev) => ({ ...prev, description: text }))}
           />
-        </View>
 
-          <Text style={styles.label}>Assigned to</Text>
-          {isEditing ? (
-          <ScrollView >
-            <View style={{ zIndex: 4000 }}>
+          {/* Technician Dropdown */}
+          <View style={{ zIndex: 4000 }}>
+            <Text style={styles.label}>Assigned to</Text>
             <DropDownPicker
               open={openTechnician}
               value={requestDetails.technician}
               items={technicianOptions}
-              setOpen={SetOpenTechnician}
+              setOpen={setOpenTechnician}
               setValue={(callback) => {
                 const value = typeof callback === "function" ? callback(requestDetails.technician) : callback;
                 setRequestDetails((prev) => ({ ...prev, technician: value }));
               }}
-              style={styles.dropdown}
               placeholder="Select technician"
-              maxHeight={200}
-              listMode="SCROLLVIEW"
+              zIndex={4000}
+              listMode="MODAL"
             />
-            </View>
-          </ScrollView>
-        ) : (
-          <View style={styles.readOnlyField}>
-            <Text style={styles.readOnlyText}>
-            {renderValue(requestDetails.technician, technicianOptions) || "No technician selected"}
-            </Text>
           </View>
-        )}
-          
 
-        <Text style={styles.label}>Status</Text>
-        {isEditing ? (
+          {/* Status Dropdown */}
           <View style={{ zIndex: 3000 }}>
+            <Text style={styles.label}>Status</Text>
             <DropDownPicker
               open={openStatus}
               value={requestDetails.status}
@@ -153,21 +141,15 @@ export default function RequestDetailsScreen() {
                 const value = typeof callback === "function" ? callback(requestDetails.status) : callback;
                 setRequestDetails((prev) => ({ ...prev, status: value }));
               }}
-              style={styles.dropdown}
-              placeholder=" select status"
+              placeholder="Select status"
+              zIndex={3000}
+              listMode="MODAL"
             />
           </View>
-        ) : (
-          <View style={styles.readOnlyField}>
-            <Text style={styles.readOnlyText}>
-            {renderValue(requestDetails.status, statusOptions) || "No status selected"}
-            </Text>
-          </View>
-        )}
 
-        <Text style={styles.label}>Priority</Text>
-        {isEditing ? (
+          {/* Priority Dropdown */}
           <View style={{ zIndex: 2000 }}>
+            <Text style={styles.label}>Priority</Text>
             <DropDownPicker
               open={openPriority}
               value={requestDetails.priority}
@@ -177,120 +159,35 @@ export default function RequestDetailsScreen() {
                 const value = typeof callback === "function" ? callback(requestDetails.priority) : callback;
                 setRequestDetails((prev) => ({ ...prev, priority: value }));
               }}
-              style={styles.dropdown}
-               placeholder="select priority"
+              placeholder="Select priority"
+              zIndex={2000}
+              listMode="MODAL"
             />
           </View>
-        ) : (
-          <View style={styles.readOnlyField}>
-            <Text style={styles.readOnlyText}>
-            {renderValue(requestDetails.priority, priorityOptions) || "No priority selected"}
-            </Text>
-          </View>
-        )}
 
-        <Text style={styles.label}>Site</Text>
-        {isEditing ? (
-          <View style={{ zIndex: 1000 }}>
-            <DropDownPicker
-              open={openSite}
-              value={requestDetails.site}
-              items={siteOptions}
-              setOpen={setOpenSite}
-              setValue={(callback) => {
-                const value = typeof callback === "function" ? callback(requestDetails.site) : callback;
-                setRequestDetails((prev) => ({ ...prev, site: value }));
-              }}
-              style={styles.dropdown}
-              placeholder="select site"
-            />
-          </View>
-        ) : (
-          <View style={styles.readOnlyField}>
-            <Text style={styles.readOnlyText}>
-            {renderValue(requestDetails.site, siteOptions) || "No site selected"}
-            </Text>
-          </View>
-        )}
-
-        <Text style={styles.label}>Date</Text>
-        <TouchableOpacity 
-          style={styles.datePicker} 
-          onPress={() => isEditing && setOpenDatePicker(true)}
-        >
-          <Text style={styles.dateText}>{requestDetails.date.toDateString()}</Text>
-        </TouchableOpacity>
-        <DatePicker
-          modal
-          open={openDatePicker}
-          date={requestDetails.date}
-          mode="date"
-          onConfirm={(date) => {
-            setOpenDatePicker(false);
-            setRequestDetails((prev) => ({ ...prev, date }));
-          }}
-          onCancel={() => setOpenDatePicker(false)}
-        />
-
-        <Text style={styles.label}>Time</Text>
-        <TouchableOpacity 
-          style={styles.datePicker} 
-          onPress={() => isEditing && setOpenTimePicker(true)}
-        >
-          <Text style={styles.dateText}>{requestDetails.time.toLocaleTimeString()}</Text>
-        </TouchableOpacity>
-        <DatePicker
-          modal
-          open={openTimePicker}
-          date={requestDetails.time}
-          mode="time"
-          onConfirm={(time) => {
-            setOpenTimePicker(false);
-            setRequestDetails((prev) => ({ ...prev, time }));
-          }}
-          onCancel={() => setOpenTimePicker(false)}
-        />
-
-        {isEditing && (
-          <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
-            <Text style={styles.saveButtonText}>Save Changes</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(!isEditing)}>
-        <Ionicons name={isEditing ? "checkmark" : "create"} size={24} color="white" />
-      </TouchableOpacity>
+          {/* Submit Button */}
+          {isEditing && (
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
+              <Text style={styles.saveButtonText}>Submit Request</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
-  header: { backgroundColor: "#106ebe", padding: 15, alignItems: "center" },
+  scrollView: { flexGrow: 1, paddingBottom: 20 },
+  header: { backgroundColor: "#106ebe", padding: 15, flexDirection: "row", alignItems: "center" },
+  backButton: { marginRight: 10, padding: 5 },
   headerTitle: { color: "white", fontSize: 18, fontWeight: "bold" },
-  content: { padding: 15, paddingBottom: 80 },
-  label: { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 5, marginTop: 5 },
-  dropdown: { marginBottom: 15, borderWidth: 1, borderColor: "#ccc", borderRadius: 5, backgroundColor: "#fff" },
-  datePicker: { padding: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 5, backgroundColor: "#fff", alignItems: "center", marginBottom: 15 },
-  dateText: { fontSize: 14, color: "#333" },
-  saveButton: { backgroundColor: "#106ebe", padding: 12, borderRadius: 5, marginTop: 10, alignItems: "center" },
+  content: { padding: 15 },
+  label: { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 5 },
+  textInput: { borderWidth: 1, borderColor: "#ccc", borderRadius: 5, padding: 10, backgroundColor: "#fff", marginBottom: 10 },
+  descriptionInput: { height: 100, textAlignVertical: "top" },
+  saveButton: { backgroundColor: "#106ebe", padding: 15, borderRadius: 5, marginTop: 20, alignItems: "center" },
   saveButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
-  editButton: { position: "absolute", right: 20, bottom: 20, backgroundColor: "#106ebe", width: 50, height: 50, borderRadius: 25, justifyContent: "center", alignItems: "center", elevation: 5 },
-  title: { fontSize: 16, marginBottom: 5 },
-  subtitle: { fontSize: 16, marginBottom: 15 },
-  textInput: { padding: 10, borderWidth: 1, borderColor: "#ccc", borderRadius: 5, backgroundColor: "#fff", alignItems: "center", marginBottom: 15 },
-  readOnlyField: { 
-    padding: 10, 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 5, 
-    backgroundColor: "#fff", 
-    marginBottom: 15 
-  },
-  readOnlyText: { 
-    fontSize: 14, 
-    color: "#333" 
-  },
- 
-}); 
+});
+
