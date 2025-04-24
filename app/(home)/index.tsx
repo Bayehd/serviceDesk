@@ -1,69 +1,38 @@
-import React, { useState, useEffect } from "react";
-import { Text, TextInput, Image, StyleSheet, View, KeyboardAvoidingView, TouchableOpacity, Alert } from "react-native";
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { FirebaseError } from "firebase/app";
+import React, { useState } from "react";
+import {
+  Text,
+  TextInput,
+  Image,
+  StyleSheet,
+  KeyboardAvoidingView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
 
-// ✅ Ensure Firebase is initialized only once
-const firebaseConfig = {
-  apiKey: "AIzaSyD1-g61TNrK0H7KjdhvQj6k3Rxr_1uhnAY",
-  authDomain: "servicedesk-10957.firebaseapp.com",
-  projectId: "servicedesk-10957",
-  storageBucket: "servicedesk-10957.firebasestorage.app",
-  messagingSenderId: "905706685008",
-  appId: "1:905706685008:web:b7007d69ed9faeb16d8755",
-  measurementId: "G-N9LF18TDV8"
-};
-
-if (getApps().length === 0) {
-  initializeApp(firebaseConfig);
-}
-
-const auth = getAuth();
-
 const AuthScreen = () => {
-  const router = useRouter(); // ✅ Moved inside the component
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
   const [isLogin, setIsLogin] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-    });
-    return unsubscribe;
-  }, []);
-
-  const handleSignIn = async () => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User signed in:", userCredential.user);
-
-      // ✅ Navigate to the request page using Expo Router
-      router.replace("/(drawer)/Requests");
-    } catch (error) {
-      Alert.alert("Login Failed", error.message); // ✅ Fixed typo `err.message`
+  const handleAuth = () => {
+    // Placeholder logic – replace with your own authentication method
+    if (email.trim() === "" || password.trim() === "") {
+      Alert.alert("Error", "Please fill in both email and password.");
+      return;
     }
-  };
 
-  const handleSignUp = async () => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("User created:", userCredential.user);
+    console.log(`${isLogin ? "Logging in" : "Signing up"} with:`, { email, password });
 
-      // ✅ Navigate after sign-up
-      router.replace("/(drawer)/request");
-    } catch (error) {
-      Alert.alert("Sign Up Failed", error.message);
-    }
+   
+    router.replace("/(drawer)/Requests"); 
   };
 
   return (
     <KeyboardAvoidingView style={styles.container}>
       <Image source={require("../assets/loginn.png")} style={styles.image} />
-      
+
       <Text style={styles.title}>Service Desk</Text>
 
       <TextInput
@@ -74,7 +43,7 @@ const AuthScreen = () => {
         onChangeText={setEmail}
         value={email}
       />
-      
+
       <TextInput
         style={styles.textInput}
         placeholder="Enter password"
@@ -84,7 +53,7 @@ const AuthScreen = () => {
         value={password}
       />
 
-      <TouchableOpacity style={styles.button} onPress={isLogin ? handleSignIn : handleSignUp}>
+      <TouchableOpacity style={styles.button} onPress={handleAuth}>
         <Text style={styles.buttonText}>{isLogin ? "SIGN IN" : "CREATE ACCOUNT"}</Text>
       </TouchableOpacity>
 

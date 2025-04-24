@@ -27,7 +27,7 @@ export default function  DrawerLayout() {
                 options = {{ 
                     drawerLabel : " Add Requests", 
                     headerTitle : "Request Details",
-                    drawerIcon: ({ size, color}) => <AntDesign name="edit"  size={size} color={color}/>,
+                    drawerIcon: ({ size, color}) => <AntDesign name="edit"  size={size} />,
                 }}
               />
 
@@ -52,5 +52,5 @@ export default function  DrawerLayout() {
 };
 
 const styles = StyleSheet.create({
-  headerTitle: { backgroundColor: " #106ebe" },
+  name: { backgroundColor: " #106ebe" },
 });

@@ -4,15 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../FirebaseConfig';
 
-
-// Define TypeScript interfaces
-
-
 interface Request {
   id: string;
   requester: string;
   name: string;
   title: string;
+  technician: string;
   priority: string;
   date: any; // Firestore Timestamp
   status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
@@ -25,15 +22,14 @@ export default function RequestScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
 
-
   useEffect(() => {
     const requestsRef = collection(db, "requests");
-    const q = query(requestsRef, orderBy("date", "desc")); // Sort by latest
+    const q = query(requestsRef, orderBy("date", "desc")); 
   
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedRequests: Request[] = snapshot.docs.map((doc) => ({
         id: doc.id,
-        ...(doc.data() as Request), // ✅ Explicitly cast Firestore data to Request type
+        ...(doc.data() as Request),
       }));
   
       setRequests(fetchedRequests);
@@ -44,17 +40,17 @@ export default function RequestScreen() {
       setLoading(false);
     });
   
-    return () => unsubscribe(); // Cleanup listener
+    return () => unsubscribe(); 
   }, []);
   
-
   const addRequest = async () => {
     try {
       const requestsRef = collection(db, 'requests');
       const newRequest = {
         requester: "New User",
-        name: "New Request",
+        name: "Request",
         title: "New Issue",
+        technician: "",
         priority: "Normal",
         date: serverTimestamp(),
         status: "Open" as const,
@@ -105,7 +101,7 @@ export default function RequestScreen() {
     }
   };
 
-  const filteredRequests = requests.filter((request: { title: string; name: string; status: string; }) => {
+  const filteredRequests = requests.filter((request: { title: string; name: string; status: string;}) => {
     const matchesSearch = searchQuery.toLowerCase() === '' || 
       request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -137,11 +133,6 @@ export default function RequestScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Opened Requests</Text>
-        <Ionicons name="search" size={24} color="white" />
-      </View>
-
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
         <TextInput
@@ -159,7 +150,6 @@ export default function RequestScreen() {
           <ActivityIndicator size="large" color="#106ebe" />
         </View>
       ) : (
-        
         <FlatList
           data={filteredRequests}
           keyExtractor={(item) => item.id}
@@ -175,6 +165,7 @@ export default function RequestScreen() {
                 </View>
               </View>
               <Text style={styles.requestDetails}>{item.name}</Text>
+              <Text style={styles.technician}>{item.technician || 'Unassigned'}</Text>
               <Text style={styles.requestDetails}>Priority: {item.priority}</Text>
               <Text style={styles.requestDate}>
                 {item.date?.toDate?.()?.toLocaleString() || 'No date'}
@@ -208,7 +199,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: "#106ebe",
+    backgroundColor: "#106ebe", // Applied requested background color
     padding: 15,
     paddingTop: Platform.OS === 'ios' ? 50 : 15,
     flexDirection: 'row',
@@ -278,6 +269,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#666",
     marginBottom: 4,
+  },
+  technician: {
+    fontSize: 14,
+    color: "#333", // Made darker for better visibility
+    marginBottom: 4,
+    fontWeight: "500", // Added weight to make it stand out a bit
   },
   requestDate: {
     fontSize: 12,

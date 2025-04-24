@@ -13,7 +13,7 @@ const requests = [
 ];
 
 export default function ReportsScreen() {
-  const [timeframe, setTimeframe] = useState('weekly'); // 'weekly' or 'monthly'
+  const [timeframe, setTimeframe] = useState('weekly'); 
 
   const statistics = useMemo(() => {
     const now = new Date();
@@ -52,7 +52,7 @@ export default function ReportsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Reports</Text>
+        
         <View style={styles.timeframeContainer}>
           <TouchableOpacity
             style={[styles.timeframeButton, timeframe === 'weekly' && styles.activeTimeframe]}
