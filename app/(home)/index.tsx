@@ -7,26 +7,58 @@ import {
   KeyboardAvoidingView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
+  View,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { signIn } from "../components/authService";
+import { useAuth } from "../components/authContext";
 
 const AuthScreen = () => {
   const router = useRouter();
+  const { setUser, setUserRole, setAdminSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const handleAuth = () => {
-    // Placeholder logic – replace with your own authentication method
+  const handleAuth = async () => {
     if (email.trim() === "" || password.trim() === "") {
       Alert.alert("Error", "Please fill in both email and password.");
       return;
     }
 
-    console.log(`${isLogin ? "Logging in" : "Signing up"} with:`, { email, password });
-
-   
-    router.replace("/(drawer)/Requests"); 
+    setLoading(true);
+    
+    try {
+      const { user, role } = await signIn(email, password);
+      
+      // Store user in context
+      setUser(user);
+      setUserRole(role);
+      
+      // If this is an admin login, store the session
+      if (role === 'admin') {
+        await setAdminSession();
+      }
+      
+      console.log(`Logged in as ${role}:`, user.email);
+      
+      // Navigate based on role
+      if (role === 'admin') {
+        router.replace("/(drawer)/Admin");
+      } else {
+        router.replace("/(drawer)/Requests");
+      }
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert(
+        "Authentication Failed",
+        "Invalid email or password. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,6 +74,7 @@ const AuthScreen = () => {
         placeholder="username@wagpco.com"
         onChangeText={setEmail}
         value={email}
+        editable={!loading}
       />
 
       <TextInput
@@ -51,17 +84,26 @@ const AuthScreen = () => {
         secureTextEntry
         onChangeText={setPassword}
         value={password}
+        editable={!loading}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleAuth}>
-        <Text style={styles.buttonText}>{isLogin ? "SIGN IN" : "CREATE ACCOUNT"}</Text>
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleAuth}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.buttonText}>SIGN IN</Text>
+        )}
       </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-        <Text style={styles.toggleText}>
-          {isLogin ? "Create an account? Sign Up" : "Already have an account? Sign In"}
+      
+      <View style={styles.adminHint}>
+        <Text style={styles.adminHintText}>
+          Admin login: username "admin", password "admin"
         </Text>
-      </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -107,10 +149,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  toggleText: {
-    color: "#106ebe",
-    fontSize: 14,
-    textDecorationLine: "underline",
+  adminHint: {
+    marginTop: 20,
+    padding: 10,
+  },
+  adminHintText: {
+    color: "#666",
+    fontSize: 12,
   },
 });
 

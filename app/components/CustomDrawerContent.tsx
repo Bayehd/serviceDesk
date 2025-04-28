@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Image, View, Text, Button, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAuth, signOut } from "firebase/auth";
-import { db } from "../../FirebaseConfig"; 
+//import { db } from "../../FirebaseConfig"; 
 
 export default function CustomDrawerContent(props: any) {
     const router = useRouter();
@@ -23,7 +23,6 @@ export default function CustomDrawerContent(props: any) {
     return (
         <View style={{ flex: 1 }}>
             <DrawerContentScrollView {...props}>
-                {/* Profile Section */}
                 <View style={{ alignItems: "center", paddingVertical: 20 }}>
                     <Image
                         source={require("../assets/Profile.png")}
@@ -36,7 +35,7 @@ export default function CustomDrawerContent(props: any) {
                 <DrawerItemList {...props} />
             </DrawerContentScrollView>
 
-            {/* Sign Out Button */}
+          
             <View style={{ borderTopWidth: 1, borderTopColor: "#ccc", padding: 10 }}>
                 <DrawerItem 
                     label="Sign Out"

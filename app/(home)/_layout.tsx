@@ -1,8 +1,19 @@
 import { Slot } from 'expo-router';
+import React from 'react';
+import { AuthProvider } from '../components/authContext';
+import { Stack } from 'expo-router';
 
 export default function Layout() {
-  return <Slot />; // This will automatically handle navigation
+  return (
+
+    <AuthProvider>
+      <Stack>
+      <Slot />
+      </Stack>
+    </AuthProvider>
+  );
 }
+
 
 /*
 import { createStackNavigator } from "@react-navigation/stack";

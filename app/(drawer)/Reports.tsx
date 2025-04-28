@@ -1,21 +1,71 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../../FirebaseConfig';
 
+interface Request {
+  id: string;
+  requester: string;
+  name: string;
+  title: string;
+  technician: string;
+  priority: string;
+  date: any; // Firestore Timestamp
+  status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
+}
 
-const requests = [
-  { id: "11804", name: "Kwame Opare Adufo", title: "GCMA's printer", priority: "", date: "2024-07-21", status: "Open" },
-  { id: "11805", name: "Adeyemi A. Adeola", title: "Unable to browse", priority: "Priority not set", date: "2024-07-20", status: "Unassigned" },
-  { id: "11806", name: "Kwame Opare Adufo", title: "Mouse not working", priority: "Priority not set", date: "2024-07-19", status: "Open" },
-  { id: "11807", name: "Leonard Acquah", title: "Coreg access", priority: "Low", date: "2024-07-18", status: "Resolved" },
-  { id: "11808", name: "Sam E. Calys Tagoe", title: "Replacement for battery", priority: "Priority not set", date: "2024-07-17", status: "Closed" },
-  { id: "11809", name: "Prince T. Okutu", title: "Tema HMI values", priority: "High", date: "2024-07-16", status: "Open" },
-];
+// Add interface for StatCard props
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: string; // Ionicons name
+  color: string;
+}
 
 export default function ReportsScreen() {
-  const [timeframe, setTimeframe] = useState('weekly'); 
+  const [timeframe, setTimeframe] = useState('weekly');
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch requests from Firestore
+  useEffect(() => {
+    const requestsRef = collection(db, "requests");
+    const q = query(requestsRef, orderBy("date", "desc")); 
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedRequests: Request[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as Omit<Request, 'id'>;
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
+  
+      setRequests(fetchedRequests);
+      setLoading(false);
+    }, (error) => {
+      setError("Failed to fetch requests");
+      console.error("Firestore Error:", error);
+      setLoading(false);
+    });
+  
+    return () => unsubscribe(); 
+  }, []);
 
   const statistics = useMemo(() => {
+    if (requests.length === 0) {
+      return {
+        total: 0,
+        open: 0,
+        closed: 0,
+        resolved: 0,
+        unassigned: 0,
+        highPriority: 0,
+      };
+    }
+
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -23,7 +73,11 @@ export default function ReportsScreen() {
     const filterDate = timeframe === 'weekly' ? oneWeekAgo : oneMonthAgo;
 
     const filteredRequests = requests.filter(request => {
-      const requestDate = new Date(request.date);
+      // Handle Firestore timestamp or string dates
+      const requestDate = request.date?.toDate ? 
+        request.date.toDate() : 
+        new Date(request.date);
+      
       return requestDate >= filterDate;
     });
 
@@ -33,13 +87,14 @@ export default function ReportsScreen() {
       closed: filteredRequests.filter(r => r.status === 'Closed').length,
       resolved: filteredRequests.filter(r => r.status === 'Resolved').length,
       unassigned: filteredRequests.filter(r => r.status === 'Unassigned').length,
-      highPriority: filteredRequests.filter(r => r.priority === 'High').length,
+      highPriority: filteredRequests.filter(r => (r.priority || '').toLowerCase() === 'high').length,
     };
 
     return stats;
-  }, [timeframe]);
+  }, [timeframe, requests]);
 
-  const StatCard = ({ title, value, icon, color }) => (
+  // Define StatCard component with proper type annotations
+  const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
     <View style={[styles.card, { borderLeftColor: color }]}>
       <View style={styles.cardHeader}>
         <Ionicons name={icon} size={24} color={color} />
@@ -49,10 +104,36 @@ export default function ReportsScreen() {
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#106ebe" />
+        <Text style={styles.loadingText}>Loading reports...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle" size={48} color="#F44336" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        
         <View style={styles.timeframeContainer}>
           <TouchableOpacity
             style={[styles.timeframeButton, timeframe === 'weekly' && styles.activeTimeframe]}
@@ -107,6 +188,13 @@ export default function ReportsScreen() {
             icon="warning"
             color="#F44336"
           />
+        </View>
+
+        <View style={styles.timeframeInfo}>
+          <Ionicons name="information-circle" size={16} color="#666" style={styles.infoIcon} />
+          <Text style={styles.timeframeInfoText}>
+            Showing {timeframe === 'weekly' ? 'last 7 days' : 'last 30 days'} statistics
+          </Text>
         </View>
       </ScrollView>
     </View>
@@ -192,5 +280,55 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 10,
+    marginBottom: 20,
+    color: '#666',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#106ebe',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  timeframeInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  infoIcon: {
+    marginRight: 5,
+  },
+  timeframeInfoText: {
+    color: '#666',
+    fontSize: 14,
   },
 });

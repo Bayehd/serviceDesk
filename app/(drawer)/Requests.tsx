@@ -27,10 +27,13 @@ export default function RequestScreen() {
     const q = query(requestsRef, orderBy("date", "desc")); 
   
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedRequests: Request[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Request),
-      }));
+      const fetchedRequests: Request[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as Omit<Request, 'id'>;
+        return {
+          id: doc.id,
+          ...data,
+        };
+      });
   
       setRequests(fetchedRequests);
       setLoading(false);
@@ -101,19 +104,22 @@ export default function RequestScreen() {
     }
   };
 
-  const filteredRequests = requests.filter((request: { title: string; name: string; status: string;}) => {
+  const filteredRequests = requests.filter((request) => {
+    const title = request.title || '';
+    const name = request.name || '';
+    
     const matchesSearch = searchQuery.toLowerCase() === '' || 
-      request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.name.toLowerCase().includes(searchQuery.toLowerCase());
-
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      name.toLowerCase().includes(searchQuery.toLowerCase());
+    
     const matchesFilter = selectedFilter === 'All' || 
       (selectedFilter === 'Closed' ? 
         ['Closed', 'Resolved'].includes(request.status) : 
         request.status === selectedFilter);
-
+    
     return matchesSearch && matchesFilter;
   });
-
+  
   if (error) {
     return (
       <View style={styles.centerContainer}>
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: "#106ebe", // Applied requested background color
+    backgroundColor: "#106ebe", 
     padding: 15,
     paddingTop: Platform.OS === 'ios' ? 50 : 15,
     flexDirection: 'row',
@@ -272,9 +278,9 @@ const styles = StyleSheet.create({
   },
   technician: {
     fontSize: 14,
-    color: "#333", // Made darker for better visibility
+    color: "#333", 
     marginBottom: 4,
-    fontWeight: "500", // Added weight to make it stand out a bit
+    fontWeight: "500", 
   },
   requestDate: {
     fontSize: 12,
