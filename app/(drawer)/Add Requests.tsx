@@ -30,8 +30,10 @@ export default function RequestDetailsScreen() {
     { label: "Adewunmi Akinyode", value: "Adewunmi Akinyode" },
     { label: "Adeyemi A. Adeola", value: "Adeyemi A. Adeola" },
     { label: "Leonard Acquah", value: "Leonard Acquah" },
-    { label: "Prince T. Okutu", value: "Prince T. Okutu" }, 
+    { label: "Prince T. Okutu", value: "Prince T. Okutu" },
+    { label: "Joseph Appiah", value: "Joseph Appiah"}, 
     { label: "Kwame Opare Adufo", value: "Kwame Opare Adufo" }, 
+    { label: "Joshua Sackey", value: "Joshua Sackey" }, 
     { label: "Samuel E.Calys-Tagoe", value: "Samuel E.Calys-Tagoe" }, 
     { label: "Kamoli O. Ganiyu", value: "Kamoli O. Ganiyu" },
     { label: "Gentle Agoh", value: "Gentle Agoh" },
@@ -61,7 +63,6 @@ export default function RequestDetailsScreen() {
     { label: "Ikeja", value: "Ikeja" },
   ];
 
-  // Function to reset the form to initial state
   const resetForm = () => {
     setRequestDetails({
       requester: "",
@@ -138,7 +139,7 @@ export default function RequestDetailsScreen() {
               setOpen={setOpenTechnician}
               setValue={(callback) => {
                 const value = typeof callback === "function" ? callback(requestDetails.technician) : callback;
-                setRequestDetails((prev) => ({ ...prev, assignedTo: value }));
+                setRequestDetails((prev) => ({ ...prev, technician: value }));
               }}
               placeholder="Select technician"
               zIndex={4000}
