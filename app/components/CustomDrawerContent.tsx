@@ -1,20 +1,50 @@
 import { DrawerContentScrollView, DrawerItemList, DrawerItem } from "@react-navigation/drawer";
 import { useRouter } from 'expo-router';
-import { Image, View, Text, Button, StyleSheet } from "react-native";
+import { Image, View, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getAuth, signOut } from "firebase/auth";
-//import { db } from "../../FirebaseConfig"; 
+import { useEffect, useState } from "react";
+import { db } from "../../FirebaseConfig"; 
 
 export default function CustomDrawerContent(props: any) {
     const router = useRouter();
     const { top, bottom } = useSafeAreaInsets();
     const auth = getAuth();
+    
 
-    // 🔹 Sign Out Function
+    const [userEmail, setUserEmail] = useState("");
+    const [displayName, setDisplayName] = useState("User");
+
+    useEffect(() => {
+    
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            const email = currentUser.email || "";
+            setUserEmail(email);
+        
+            setDisplayName(currentUser.displayName || email.split('@')[0] || "User");
+        }
+        
+        // Listen for auth state changes
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+                const email = user.email || "";
+                setUserEmail(email);
+                setDisplayName(user.displayName || email.split('@')[0] || "User");
+            } else {
+                setUserEmail("");
+                setDisplayName("User");
+            }
+        });
+        
+       
+        return () => unsubscribe();
+    }, []);
+
     const handleSignOut = async () => {
         try {
             await signOut(auth);
-            router.replace("/"); // 🔹 Redirect to Index Page
+            router.replace("/");
         } catch (error) {
             console.error("Sign Out Error:", error.message);
         }
@@ -28,8 +58,12 @@ export default function CustomDrawerContent(props: any) {
                         source={require("../assets/Profile.png")}
                         style={{ width: 80, height: 80, borderRadius: 40 }}
                     />
-                    <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>Benonia Ayeh</Text>
-                    <Text style={{ fontSize: 14, color: "#1c3367" }}>oayeh@wagpco.com</Text>
+                    <Text style={{ fontSize: 16, fontWeight: "bold", marginTop: 10 }}>
+                        {displayName}
+                    </Text>
+                    <Text style={{ fontSize: 14, color: "#1c3367" }}>
+                        {userEmail}
+                    </Text>
                 </View>
 
                 <DrawerItemList {...props} />

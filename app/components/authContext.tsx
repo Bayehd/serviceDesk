@@ -1,15 +1,27 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from '../../FirebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { isAdmin } from '../components/authService';
 
-// Create context
-const AuthContext = createContext();
+// Define the AuthContextType interface first
+export interface AuthContextType {
+  user: any;
+  userRole: string | null;
+  isAdmin: boolean;
+  loading: boolean;
+  setUser: (user: any) => void;
+  setUserRole: (role: string | null) => void;
+  setAdminSession: () => Promise<void>;
+  signOut: () => Promise<boolean>;
+}
+
+// Create the context with proper typing
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Check for stored admin session on mount
@@ -75,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       
       // Sign out from Firebase Auth
       if (auth.currentUser) {
-        await auth.signOut();
+        await firebaseSignOut(auth);
       }
       
       // Clear state
@@ -90,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Provide the context value
-  const value = {
+  const value: AuthContextType = {
     user,
     userRole,
     isAdmin: userRole === 'admin',
@@ -109,6 +121,10 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom hook to use the auth context
-export const useAuth = () => {
-  return useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
