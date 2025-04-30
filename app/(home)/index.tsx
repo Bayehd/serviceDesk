@@ -8,15 +8,25 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  View,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { signIn } from "../components/authService";
 import { useAuth } from "../components/authContext";
 
+interface AuthContextType {
+  user: any;
+  userRole: string | null;
+  isAdmin: boolean;
+  loading: boolean;
+  setUser: (user: any) => void;
+  setUserRole: (role: string | null) => void;
+  setAdminSession: () => Promise<void>;
+  signOut: () => Promise<boolean>;
+}
+
 const AuthScreen = () => {
   const router = useRouter();
-  const { setUser, setUserRole, setAdminSession } = useAuth();
+  const { setUser, setUserRole, setAdminSession } = useAuth() as AuthContextType;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,8 +42,11 @@ const AuthScreen = () => {
     try {
       const { user, role } = await signIn(email, password);
       
-      // Store user in context
-      setUser(user);
+      // Store user information including email in auth context
+      setUser({
+        ...user,
+        email: email // Ensure email is stored in user object
+      });
       setUserRole(role);
       
       // If this is an admin login, store the session
@@ -41,11 +54,10 @@ const AuthScreen = () => {
         await setAdminSession();
       }
       
-      console.log(`Logged in as ${role}:`, user.email);
-      
-      // Navigate based on role
+      console.log(`Logged in as ${role}:`, email);
+           
       if (role === 'admin') {
-        router.replace("/(drawer)/Admin");
+        router.replace("/(drawer)/Requests");
       } else {
         router.replace("/(drawer)/Requests");
       }
@@ -71,7 +83,7 @@ const AuthScreen = () => {
         style={styles.textInput}
         autoCapitalize="none"
         keyboardType="email-address"
-        placeholder="username@wagpco.com"
+        placeholder="Enter email"
         onChangeText={setEmail}
         value={email}
         editable={!loading}
@@ -88,7 +100,7 @@ const AuthScreen = () => {
       />
 
       <TouchableOpacity 
-        style={styles.button} 
+        style={styles.button}
         onPress={handleAuth}
         disabled={loading}
       >
@@ -99,11 +111,6 @@ const AuthScreen = () => {
         )}
       </TouchableOpacity>
       
-      <View style={styles.adminHint}>
-        <Text style={styles.adminHintText}>
-          Admin login: username "admin", password "admin"
-        </Text>
-      </View>
     </KeyboardAvoidingView>
   );
 };

@@ -15,11 +15,11 @@ interface Request {
   status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
 }
 
-// Add interface for StatCard props
+
 interface StatCardProps {
   title: string;
   value: number;
-  icon: string; // Ionicons name
+  icon: keyof typeof Ionicons.glyphMap; // This is the key fix
   color: string;
 }
 
@@ -73,7 +73,6 @@ export default function ReportsScreen() {
     const filterDate = timeframe === 'weekly' ? oneWeekAgo : oneMonthAgo;
 
     const filteredRequests = requests.filter(request => {
-      // Handle Firestore timestamp or string dates
       const requestDate = request.date?.toDate ? 
         request.date.toDate() : 
         new Date(request.date);
@@ -93,7 +92,7 @@ export default function ReportsScreen() {
     return stats;
   }, [timeframe, requests]);
 
-  // Define StatCard component with proper type annotations
+  // StatCard component with proper type annotations
   const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
     <View style={[styles.card, { borderLeftColor: color }]}>
       <View style={styles.cardHeader}>

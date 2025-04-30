@@ -187,9 +187,6 @@ export default function RequestScreen() {
         />
       )}
 
-      <TouchableOpacity style={styles.addButton} onPress={addRequest}>
-        <Ionicons name="add" size={30} color="white" />
-      </TouchableOpacity>
     </View>
   );
 }
@@ -308,25 +305,6 @@ const styles = StyleSheet.create({
   },
   statusUnassigned: {
     backgroundColor: "#fff3e0",
-  },
-  addButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#106ebe",
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   emptyContainer: {
     flex: 1,
