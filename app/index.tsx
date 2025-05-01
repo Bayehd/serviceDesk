@@ -70,6 +70,7 @@ export default function AuthScreen() {
       console.log("User document:", userDoc);
       setUser(userDoc);
       
+      Alert.alert("Success", `Welcome back, ${userDoc.email}`)
 
       router.replace("/(drawer)/Requests"); 
     } catch (error: any) {
