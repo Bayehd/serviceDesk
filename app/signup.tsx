@@ -1,70 +1,73 @@
-// Sign-Up Page (signup.js)
-import React, { useState } from 'react';
-import { 
-  Text, 
-  View, 
-  KeyboardAvoidingView, 
-  TouchableOpacity, 
-  TextInput, 
-  SafeAreaView, 
-  StyleSheet,
-  Alert
-} from 'react-native';
+import { auth, SignUpSchema, SignUpSchemaType, usersCollection } from "@/lib";
+import AntDesign from "@expo/vector-icons/AntDesign";
 import { useRouter } from "expo-router";
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib';
-//import { getAuth, signOut } from "firebase/auth";
-type SignUpProps={
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { addDoc } from "firebase/firestore";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { zodResolver } from "@hookform/resolvers/zod";
 export default function SignUp() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    email: "papayaw@gmail.com",
-    password: "papayaw@gmail.com",
-    confirmPassword: "papayaw@gmail.com",
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignUpSchemaType>({
+    defaultValues: {
+      email: "gyekye@gmail.com",
+      password: "gyekye@gmail.com",
+      confirmPassword: "gyekye@gmail.com",
+    },
+    resolver: zodResolver(SignUpSchema),
   });
 
-  async function handleSubmit (){
-    if (!form.email || !form.password || !form.confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
-      return;
-    }
-
+  async function onSubmit(data: SignUpSchemaType) {
     try {
-      const user = await createUserWithEmailAndPassword(auth,form.email, form.password);
-      console.log("User signed up:", user);
-      Alert.alert("Success", "Account created successfully!");
-      
+      const user = await createUserWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      if (user) {
+        await addDoc(usersCollection, {
+          uid: user?.user?.uid,
+          email: user?.user?.email,
+          role: "user",
+          createdAt: new Date().toISOString(),
+        });
+
+        Alert.alert("Success", "Account created successfully!");
+        router.push("/(drawer)");
+      } else {
+        Alert.alert("Error", "Failed to create account. Please try again.");
+      }
     } catch (error) {
       console.error("Error signing up:", error);
       Alert.alert("Error", "Failed to create account. Please try again.");
     }
-  };
-
-
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.centerContainer}>
         <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={() => {router.back()}}
+          <TouchableOpacity
+            onPress={() => {
+              router.back();
+            }}
             style={styles.headerBack}
           >
-            <AntDesign 
-              name="left" 
-              color="#1D2A32"
-              size={30} 
-            />
+            <AntDesign name="left" color="#1D2A32" size={30} />
           </TouchableOpacity>
         </View>
         <Text style={styles.title}>Service Desk</Text>
@@ -73,45 +76,71 @@ export default function SignUp() {
         <KeyboardAvoidingView style={styles.form}>
           <View style={styles.input}>
             <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-              placeholder="username@wagpco.com"
-              onChangeText={email => setForm({ ...form, email })}
-              style={styles.inputControl}
-              value={form.email}
-              keyboardType="email-address"
-              autoCapitalize="none"
+            <Controller
+              control={control}
+              rules={{
+                required: true,
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  placeholder="First name"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  style={styles.inputControl}
+                />
+              )}
+              name="email"
             />
+            {errors.email && <Text>This is required.</Text>}
           </View>
           <View style={styles.input}>
             <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-              placeholder="Enter password"
-              onChangeText={password => setForm({ ...form, password })}
-              style={styles.inputControl}
-              secureTextEntry={true}
-              value={form.password}
-              autoCapitalize="none"
+            <Controller
+              control={control}
+              rules={{
+                required: true,
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  secureTextEntry={true}
+                  placeholder="Enter password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  style={styles.inputControl}
+                />
+              )}
+              name="password"
             />
+            {errors.password && <Text>This is required.</Text>}
           </View>
           <View style={styles.input}>
             <Text style={styles.inputLabel}>Confirm Password</Text>
-            <TextInput
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-              placeholder="Confirm password"
-              onChangeText={confirmPassword => setForm({ ...form, confirmPassword })}
-              style={styles.inputControl}
-              secureTextEntry={true}
-              value={form.confirmPassword}
-              autoCapitalize="none"
+            <Controller
+              control={control}
+              rules={{
+                required: true,
+              }}
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  secureTextEntry={true}
+                  placeholder="Enter password"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                    style={styles.inputControl}
+                  value={value}
+                />
+              )}
+              name="confirmPassword"
             />
+            {errors.confirmPassword && <Text>This is required.</Text>}
           </View>
           <View>
-            <TouchableOpacity onPress={handleSubmit} style={styles.btn}>
+            <TouchableOpacity
+              onPress={handleSubmit(onSubmit)}
+              style={styles.btn}
+            >
               <Text style={styles.btnText}>Sign Up</Text>
             </TouchableOpacity>
           </View>
@@ -130,28 +159,28 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   headerBack: {
     padding: 8,
     paddingTop: 0,
-    position: 'relative',
+    position: "relative",
     marginLeft: -16,
   },
   title: {
     color: "#106ebe",
     fontSize: 20,
     fontWeight: "900",
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 15,
-    fontWeight: '500',
-    color: '#929292',
-    textAlign: 'center',
+    fontWeight: "500",
+    color: "#929292",
+    textAlign: "center",
     marginBottom: 20,
   },
   form: {
@@ -167,9 +196,9 @@ const styles = StyleSheet.create({
   formFooter: {
     paddingVertical: 24,
     fontSize: 15,
-    fontWeight: '600',
-    color: '#222',
-    textAlign: 'center',
+    fontWeight: "600",
+    color: "#222",
+    textAlign: "center",
     letterSpacing: 0.15,
   },
   input: {
@@ -177,18 +206,18 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#222',
+    fontWeight: "600",
+    color: "#222",
     marginBottom: 8,
   },
   inputControl: {
-        width: "100%",
-        padding: 12,
-        borderWidth: 1,
-        borderColor: "#ccc",
-        borderRadius: 5,
-        backgroundColor: "#fff",
-        marginBottom: 15,
+    width: "100%",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    backgroundColor: "#fff",
+    marginBottom: 15,
   },
   btn: {
     width: "100%",
@@ -201,7 +230,7 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 18,
     lineHeight: 26,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
 });

@@ -1,70 +1,70 @@
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  Image,
-  StyleSheet,
-  KeyboardAvoidingView,
   TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-  Pressable,
 } from "react-native";
 
-import { useAuth } from "@/context/authContext";
-import { signIn } from "@/services/auth";
+import { auth, LoginSchema, LoginSchemaType, usersCollection } from "@/lib";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
-
-
-interface AuthContextType {
-  user: any;
-  userRole: string | null;
-  isAdmin: boolean;
-  loading: boolean;
-  setUser: (user: any) => void;
-  setUserRole: (role: string | null) => void;
-  setAdminSession: () => Promise<void>;
-  signOut: () => Promise<boolean>;
-}
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { Controller, useForm } from "react-hook-form";
+import { getDocs, query, where } from "firebase/firestore";
+import { useAuth } from "@/context/authContext";
 
 export default function AuthScreen() {
-
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginSchemaType>({
+    defaultValues: {
+      email: "gyekye@gmail.com",
+      password: "gyekye@gmail.com",
+    },
+    resolver: zodResolver(LoginSchema),
+  });
+  const { setUser } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const handleAuth = async () => {
-    if (email.trim() === "" || password.trim() === "") {
-      Alert.alert("Error", "Please fill in both email and password.");
-      return;
-    }
-
+  async function handleAuth(data: LoginSchemaType) {
     setLoading(true);
-    
-    try {
-      const  user= await signIn(email, password);
-      
-      console.log("User signed in:", user);
 
-      // setUser({
-      //   ...user,
-      //   email: email // Ensure email is stored in user object
-      // });
-      // setUserRole(role);
-  
-      // if (role === 'admin') {
-      //   await setAdminSession();
-      // }
-      
-      // console.log(`Logged in as ${role}:`, email);
-           
-      // if (role === 'admin') {
-      //   router.replace("/(drawer)/Requests");
-      // } else {
-      //   router.replace("/(drawer)/Requests");
-      // }
-      
+    try {
+      const user = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+
+      if (!user) {
+        Alert.alert("Error", "Failed to log in. Please try again.");
+        return;
+      }
+      const { user: firebaseUser } = user;
+      const q = query(
+        usersCollection,
+        where("email", "==", firebaseUser.email)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Error", "User not found. Please check your email.");
+        return;
+      }
+      const userDoc = querySnapshot.docs[0].data();
+
+      setUser(userDoc);
+      Alert.alert("Success", `Welcome back, ${userDoc.email}!`);
     } catch (error) {
       console.error("Login error:", error);
       Alert.alert(
@@ -74,56 +74,85 @@ export default function AuthScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <KeyboardAvoidingView style={styles.container}>
-      <Pressable onPress={() => router.push("/signup")} >
-        <Text>
-          Press
-        </Text>
-      </Pressable>
-      <Image source={require("../assets/loginn.png")} style={styles.image} />
-
-      <Text style={styles.title}>Service Desk</Text>
-
-      <TextInput
-        style={styles.textInput}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        placeholder="Enter email"
-        onChangeText={setEmail}
-        value={email}
-        editable={!loading}
-      />
-
-      <TextInput
-        style={styles.textInput}
-        placeholder="Enter password"
-        autoCapitalize="none"
-        secureTextEntry
-        onChangeText={setPassword}
-        value={password}
-        editable={!loading}
-      />
-
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={handleAuth}
-        disabled={loading}
+    <KeyboardAvoidingView
+      style={styles.keyboardAvoidingContainer}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" size="small" />
-        ) : (
-          <Text style={styles.buttonText}>SIGN IN</Text>
-        )}
-      </TouchableOpacity>
-      
+        <Pressable onPress={() => router.push("/signup")}>
+          <Text>Press</Text>
+        </Pressable>
+        <Image source={require("../assets/loginn.png")} style={styles.image} />
+
+        <Text style={styles.title}>Service Desk</Text>
+
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              placeholder="Enter your email"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              style={styles.textInput}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+          )}
+          name="email"
+        />
+        {errors.email && <Text>This is required.</Text>}
+
+        <Controller
+          control={control}
+          rules={{
+            required: true,
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              secureTextEntry={true}
+              placeholder="Enter password"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              style={styles.textInput}
+            />
+          )}
+          name="password"
+        />
+        {errors.password && <Text>This is required.</Text>}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleSubmit(handleAuth)}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" size="small" />
+          ) : (
+            <Text style={styles.buttonText}>SIGN IN</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  keyboardAvoidingContainer: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
   container: {
     flexGrow: 1,
     justifyContent: "center",
@@ -173,4 +202,3 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 });
-

@@ -5,9 +5,14 @@ import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from '@/lib';
 import { isAdmin } from '@/services/auth';
 
-
+type User = {
+  uid:string
+  email:string
+  token:string
+  role:string
+}
 export interface AuthContextType {
-  user: any;
+  user: User;
   userRole: string | null;
   isAdmin: boolean;
   loading: boolean;

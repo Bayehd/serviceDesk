@@ -1,3 +1,4 @@
+import { useAuth } from "@/context/authContext";
 import { auth, db } from "@/lib";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -6,6 +7,7 @@ const ADMIN_USERNAME = "admin";
 const ADMIN_PASSWORD = "admin";
 
 export async function signIn(email: string, password: string) {
+    const {setAdminSession} = useAuth()
     try {
         console.log(`Attempting to sign in with: ${email}`);
 
