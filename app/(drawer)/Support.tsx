@@ -8,7 +8,7 @@ const Page = () => {
              Call Service Desk Phone Number : " 1188 "
         </Text>
         <Image
-                source= {require("../assets/support.png")}
+                source= {require("../../assets/support.png")}
                 style={{
                     
                     width: '70%',

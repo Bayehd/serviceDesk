@@ -1,10 +1,11 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { auth } from '../../FirebaseConfig';
-import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { isAdmin } from '../components/authService';
 
-// Define the AuthContextType interface first
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth } from '@/lib';
+import { isAdmin } from '@/services/auth';
+
+
 export interface AuthContextType {
   user: any;
   userRole: string | null;
@@ -16,10 +17,21 @@ export interface AuthContextType {
   signOut: () => Promise<boolean>;
 }
 
-// Create the context with proper typing
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }) => {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export function useAuth  () {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+type AuthProviderProps = {
+  children: React.ReactNode;
+
+}
+
+export const AuthProvider = ({ children }:Readonly<AuthProviderProps>) => {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,10 +133,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom hook to use the auth context
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};

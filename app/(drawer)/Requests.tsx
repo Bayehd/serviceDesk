@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { db } from '../../FirebaseConfig';
+import { db } from '../../lib/config/firebase';
 
 interface Request {
   id: string;

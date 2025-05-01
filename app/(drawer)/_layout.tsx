@@ -2,9 +2,10 @@ import "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AntDesign from '@expo/vector-icons/AntDesign';
-import CustomDrawerContent from "../components/CustomDrawerContent";
+
 import { StyleSheet } from "react-native";
 import { Entypo } from "@expo/vector-icons";
+import CustomDrawerContent from "@/components/CustomDrawerContent";
 
 export default function  DrawerLayout() {
 

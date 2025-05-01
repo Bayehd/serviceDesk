@@ -12,17 +12,23 @@ import {
 } from 'react-native';
 import { useRouter } from "expo-router";
 import AntDesign from '@expo/vector-icons/AntDesign';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib';
 //import { getAuth, signOut } from "firebase/auth";
-
+type SignUpProps={
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 export default function SignUp() {
   const router = useRouter();
   const [form, setForm] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
+    email: "papayaw@gmail.com",
+    password: "papayaw@gmail.com",
+    confirmPassword: "papayaw@gmail.com",
   });
 
-  const handleSignUp = () => {
+  async function handleSubmit (){
     if (!form.email || !form.password || !form.confirmPassword) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -33,20 +39,18 @@ export default function SignUp() {
       return;
     }
 
-    Alert.alert(
-      "Success", 
-      "Account created successfully!",
-      [
-        { 
-          text: "OK", 
-          onPress: () => {
-    
-            router.replace("/(home)/index");
-          }
-        }
-      ]
-    );
+    try {
+      const user = await createUserWithEmailAndPassword(auth,form.email, form.password);
+      console.log("User signed up:", user);
+      Alert.alert("Success", "Account created successfully!");
+      
+    } catch (error) {
+      console.error("Error signing up:", error);
+      Alert.alert("Error", "Failed to create account. Please try again.");
+    }
   };
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -107,7 +111,7 @@ export default function SignUp() {
             />
           </View>
           <View>
-            <TouchableOpacity onPress={handleSignUp} style={styles.btn}>
+            <TouchableOpacity onPress={handleSubmit} style={styles.btn}>
               <Text style={styles.btnText}>Sign Up</Text>
             </TouchableOpacity>
           </View>

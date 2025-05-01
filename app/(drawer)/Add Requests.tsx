@@ -1,12 +1,15 @@
-import { 
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, KeyboardAvoidingView, 
-  Platform, Alert 
-} from "react-native";
-import React, { useState } from "react";
-import DropDownPicker from "react-native-dropdown-picker";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
-import { createRequest } from '../requestService';
+import React, { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView, StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View
+} from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
+import { createRequest } from '../../requestService';
 
 export default function RequestDetailsScreen() {
   const router = useRouter();

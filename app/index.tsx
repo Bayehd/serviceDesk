@@ -8,10 +8,13 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { signIn } from "../components/authService";
-import { useAuth } from "../components/authContext";
+
+import { useAuth } from "@/context/authContext";
+import { signIn } from "@/services/auth";
+import { router } from "expo-router";
+
 
 interface AuthContextType {
   user: any;
@@ -24,9 +27,9 @@ interface AuthContextType {
   signOut: () => Promise<boolean>;
 }
 
-const AuthScreen = () => {
-  const router = useRouter();
-  const { setUser, setUserRole, setAdminSession } = useAuth() as AuthContextType;
+export default function AuthScreen() {
+
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,27 +43,27 @@ const AuthScreen = () => {
     setLoading(true);
     
     try {
-      const { user, role } = await signIn(email, password);
+      const  user= await signIn(email, password);
       
-      // Store user information including email in auth context
-      setUser({
-        ...user,
-        email: email // Ensure email is stored in user object
-      });
-      setUserRole(role);
+      console.log("User signed in:", user);
+
+      // setUser({
+      //   ...user,
+      //   email: email // Ensure email is stored in user object
+      // });
+      // setUserRole(role);
+  
+      // if (role === 'admin') {
+      //   await setAdminSession();
+      // }
       
-      // If this is an admin login, store the session
-      if (role === 'admin') {
-        await setAdminSession();
-      }
-      
-      console.log(`Logged in as ${role}:`, email);
+      // console.log(`Logged in as ${role}:`, email);
            
-      if (role === 'admin') {
-        router.replace("/(drawer)/Requests");
-      } else {
-        router.replace("/(drawer)/Requests");
-      }
+      // if (role === 'admin') {
+      //   router.replace("/(drawer)/Requests");
+      // } else {
+      //   router.replace("/(drawer)/Requests");
+      // }
       
     } catch (error) {
       console.error("Login error:", error);
@@ -75,6 +78,11 @@ const AuthScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.container}>
+      <Pressable onPress={() => router.push("/signup")} >
+        <Text>
+          Press
+        </Text>
+      </Pressable>
       <Image source={require("../assets/loginn.png")} style={styles.image} />
 
       <Text style={styles.title}>Service Desk</Text>
@@ -166,4 +174,3 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AuthScreen;

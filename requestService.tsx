@@ -10,7 +10,7 @@ import {
     serverTimestamp,
     addDoc 
   } from 'firebase/firestore';
-  import { db } from '../FirebaseConfig';
+  import { db } from './lib/config/firebase';
   
   const COLLECTION_NAME = 'requests';
   
