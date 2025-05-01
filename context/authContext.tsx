@@ -1,72 +1,104 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '@/lib';
-import { isAdmin } from '@/services/auth';
+import { auth, usersCollection } from '@/lib';
+import { getDocs, query, where } from 'firebase/firestore';
 
-type User = {
-  uid:string
-  email:string
-  token:string
-  role:string
-}
-export interface AuthContextType {
-  user: User;
-  userRole: string | null;
+// Define clear user types
+type UserRole = 'admin' | 'user';
+
+export type User = {
+  uid: string;
+  email: string;
+  role: UserRole;
+createdAt?:string
+};
+
+interface AuthContextType {
+  user: User | null;
   isAdmin: boolean;
   loading: boolean;
-  setUser: (user: any) => void;
-  setUserRole: (role: string | null) => void;
-  setAdminSession: () => Promise<void>;
-  signOut: () => Promise<boolean>;
+  setUser: (user: User | null) => void;
+  signOut: () => Promise<void>;
 }
 
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-export function useAuth  () {
+
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-type AuthProviderProps = {
-  children: React.ReactNode;
-
 }
 
-export const AuthProvider = ({ children }:Readonly<AuthProviderProps>) => {
-  const [user, setUser] = useState(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check for stored admin session on mount
   useEffect(() => {
-    const checkAdminSession = async () => {
+    // Single unified authentication check function
+    const checkAuth = async () => {
       try {
-        const adminSession = await AsyncStorage.getItem('adminSession');
+        // First check for stored user data in AsyncStorage
+        const storedUserData = await AsyncStorage.getItem('userData');
         
-        if (adminSession) {
-          // If we have a stored admin session, restore it
-          setUser({ uid: 'admin-user', email: 'admin@servicedeskapp.com' });
-          setUserRole('admin');
+        if (storedUserData) {
+          const parsedUser = JSON.parse(storedUserData) as User;
+          setUser(parsedUser);
         }
       } catch (error) {
-        console.error("Error checking admin session:", error);
+        console.error("Error retrieving stored user data:", error);
       }
-      
-      // Also listen for Firebase auth state changes (for regular users)
+
+      // Then listen to Firebase auth state changes
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-          setUser(firebaseUser);
-          // Check if the user is an admin
-          const adminStatus = await isAdmin(firebaseUser.uid);
-          setUserRole(adminStatus ? 'admin' : 'user');
-        } else if (!await AsyncStorage.getItem('adminSession')) {
-          // Only clear user if we don't have an admin session
+          try {
+            // Query Firestore to get user role
+            const q = query(usersCollection, where("uid", "==", firebaseUser.uid));
+            const querySnapshot = await getDocs(q);
+            
+            // Default role is 'user'
+            let userRole: UserRole = 'user';
+            
+            if (!querySnapshot.empty) {
+              const userData = querySnapshot.docs[0].data();
+              // If role exists in document and is valid, use it
+              if (userData.role === 'admin' || userData.role === 'user') {
+                userRole = userData.role;
+              }
+            }
+            
+            // Create a structured user object
+            const userData: User = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email ?? '',
+              role: userRole,
+            };
+            
+            // Update state and store in AsyncStorage
+            setUser(userData);
+            await AsyncStorage.setItem('userData', JSON.stringify(userData));
+          } catch (error) {
+            console.error("Error fetching user role:", error);
+            // Default to basic user if there's an error
+            const userData: User = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email??  '',
+              role: 'user',
+              createdAt: firebaseUser.metadata.creationTime,
+            };
+            setUser(userData);
+          }
+        } else {
+          // No Firebase user, clear authentication state
           setUser(null);
-          setUserRole(null);
+          await AsyncStorage.removeItem('userData');
         }
         
         setLoading(false);
@@ -75,60 +107,33 @@ export const AuthProvider = ({ children }:Readonly<AuthProviderProps>) => {
       return unsubscribe;
     };
     
-    checkAdminSession();
+    checkAuth();
   }, []);
 
-  // Store the admin session
-  const setAdminSession = async () => {
+  const signOut = async (): Promise<void> => {
     try {
-      await AsyncStorage.setItem('adminSession', 'true');
-    } catch (error) {
-      console.error("Error storing admin session:", error);
-    }
-  };
-
-  // Clear the admin session
-  const clearAdminSession = async () => {
-    try {
-      await AsyncStorage.removeItem('adminSession');
-    } catch (error) {
-      console.error("Error clearing admin session:", error);
-    }
-  };
-
-  // Sign out function that handles both regular and admin users
-  const signOut = async () => {
-    try {
-      // Clear admin session if it exists
-      await clearAdminSession();
-      
       // Sign out from Firebase Auth
-      if (auth.currentUser) {
-        await firebaseSignOut(auth);
-      }
+      await firebaseSignOut(auth);
+      
+      // Clear stored user data
+      await AsyncStorage.removeItem('userData');
       
       // Clear state
       setUser(null);
-      setUserRole(null);
-      
-      return true;
     } catch (error) {
       console.error("Sign out error:", error);
       throw error;
     }
   };
 
-  // Provide the context value
-  const value: AuthContextType = {
+
+  const value: AuthContextType = useMemo(() => ({
     user,
-    userRole,
-    isAdmin: userRole === 'admin',
+    isAdmin: user?.role === 'admin',
     loading,
     setUser,
-    setUserRole,
-    setAdminSession,
-    signOut
-  };
+    signOut,
+  }), [user, loading]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -136,5 +141,3 @@ export const AuthProvider = ({ children }:Readonly<AuthProviderProps>) => {
     </AuthContext.Provider>
   );
 };
-
-// Custom hook to use the auth context
