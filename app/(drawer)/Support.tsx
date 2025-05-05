@@ -29,9 +29,7 @@ const style = StyleSheet.create({
     text:{
         fontWeight: "bold", 
         marginTop: 40,
-        fontSize: 20,
-        color: "#106ebe" ,
-        
-       
+        fontSize: 2,
+        color: "#106ebe" ,  
     }
 })

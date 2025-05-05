@@ -4,7 +4,7 @@ import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, usersCollection } from '@/lib';
 import { getDocs, query, where } from 'firebase/firestore';
 
-// Define clear user types
+
 type UserRole = 'admin' | 'user';
 
 export type User = {
@@ -41,10 +41,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Single unified authentication check function
+
     const checkAuth = async () => {
       try {
-        // First check for stored user data in AsyncStorage
+
         const storedUserData = await AsyncStorage.getItem('userData');
         
         if (storedUserData) {
@@ -55,11 +55,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error("Error retrieving stored user data:", error);
       }
 
-      // Then listen to Firebase auth state changes
+
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
           try {
-            // Query Firestore to get user role
+          
             const q = query(usersCollection, where("uid", "==", firebaseUser.uid));
             const querySnapshot = await getDocs(q);
             
@@ -74,19 +74,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               }
             }
             
-            // Create a structured user object
             const userData: User = {
               uid: firebaseUser.uid,
               email: firebaseUser.email ?? '',
               role: userRole,
             };
             
-            // Update state and store in AsyncStorage
             setUser(userData);
             await AsyncStorage.setItem('userData', JSON.stringify(userData));
           } catch (error) {
             console.error("Error fetching user role:", error);
-            // Default to basic user if there's an error
+         
             const userData: User = {
               uid: firebaseUser.uid,
               email: firebaseUser.email??  '',
@@ -96,7 +94,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(userData);
           }
         } else {
-          // No Firebase user, clear authentication state
           setUser(null);
           await AsyncStorage.removeItem('userData');
         }
@@ -112,13 +109,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async (): Promise<void> => {
     try {
-      // Sign out from Firebase Auth
+   
       await firebaseSignOut(auth);
       
-      // Clear stored user data
+
       await AsyncStorage.removeItem('userData');
       
-      // Clear state
+
       setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);

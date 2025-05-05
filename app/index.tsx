@@ -30,8 +30,8 @@ export default function AuthScreen() {
     formState: { errors },
   } = useForm<LoginSchemaType>({
     defaultValues: {
-      email: "gyekye@gmail.com",
-      password: "gyekye@gmail.com",
+      email: "",
+      password: "",
     },
     resolver: zodResolver(LoginSchema),
   });

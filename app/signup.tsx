@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword , sendEmailVerification} from "firebase/auth";
 import { addDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -57,9 +57,10 @@ export default function SignUp() {
           role: "user",
           createdAt: new Date().toISOString(),
         });
+        await sendEmailVerification(userCredential.user);
 
-        Alert.alert("Success", "Account created successfully!");
-        router.replace("/(tabs)");
+        Alert.alert("Success", "Account created successfully!")
+        router.replace("/"); 
       } else {
         Alert.alert("Error", "Failed to create account. Please try again.");
       }

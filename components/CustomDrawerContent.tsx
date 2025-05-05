@@ -26,7 +26,7 @@ export default function CustomDrawerContent(props: any) {
       setDisplayName(currentUser.displayName || email.split("@")[0] || "User");
     }
 
-    // Listen for auth state changes
+    
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         const email = user.email || "";
