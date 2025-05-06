@@ -63,12 +63,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             const q = query(usersCollection, where("uid", "==", firebaseUser.uid));
             const querySnapshot = await getDocs(q);
             
-            // Default role is 'user'
+           
             let userRole: UserRole = 'user';
             
             if (!querySnapshot.empty) {
               const userData = querySnapshot.docs[0].data();
-              // If role exists in document and is valid, use it
               if (userData.role === 'admin' || userData.role === 'user') {
                 userRole = userData.role;
               }

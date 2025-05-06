@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/config/firebase';
+import { useAuth } from '../../context/authContext';
+import { useRouter } from 'expo-router';
 
 interface Request {
   id: string;
   requester: string;
+  requesterEmail: string;
+  requesterUID: string;
   name: string;
   title: string;
   technician: string;
   priority: string;
-  date: any; // Firestore Timestamp
+  date: any; 
   status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
+  description?: string;
+  site?: string;
 }
 
 export default function RequestScreen() {
@@ -20,13 +26,36 @@ export default function RequestScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("All");
+  
+  const { user, isAdmin } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
+    if (!user) {
+      setError("User not authenticated");
+      setLoading(false);
+      return;
+    }
+    return fetchRequests();
+  }, [user, isAdmin]);
+
+  const fetchRequests = () => {
+    if (!user) return () => {};
+    
     const requestsRef = collection(db, "requests");
-    const q = query(requestsRef, orderBy("date", "desc")); 
+    let requestsQuery;
+    
+    if (isAdmin) {
+      requestsQuery = query(requestsRef, orderBy("date", "desc"));
+    } else {
+      requestsQuery = query(
+        requestsRef, 
+        where("requesterUID", "==", user.uid),
+        orderBy("date", "desc")
+      );
+    }
   
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(requestsQuery, (snapshot) => {
       const fetchedRequests: Request[] = snapshot.docs.map((doc) => {
         const data = doc.data() as Omit<Request, 'id'>;
         return {
@@ -43,49 +72,50 @@ export default function RequestScreen() {
       setLoading(false);
     });
   
-    return () => unsubscribe(); 
-  }, []);
-  
-  const addRequest = async () => {
-    try {
-      const requestsRef = collection(db, 'requests');
-      const newRequest = {
-        requester: "New User",
-        name: "Request",
-        title: "New Issue",
-        technician: "",
-        priority: "Normal",
-        date: serverTimestamp(),
-        status: "Open" as const,
-      };
-
-      await addDoc(requestsRef, newRequest);
-    } catch (err) {
-      Alert.alert('Error', 'Failed to add request. Please try again.');
-      console.error('Add request error:', err);
-    }
+    return unsubscribe;
   };
-
-  const deleteRequest = async (id: string) => {
+  
+  const deleteRequest = async (id: string, requesterUID: string) => {
     try {
-      Alert.alert(
-        'Delete Request',
-        'Are you sure you want to delete this request?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              const requestRef = doc(db, 'requests', id);
-              await deleteDoc(requestRef);
+      if (!user) {
+        Alert.alert('Error', 'You must be logged in to delete requests.');
+        return;
+      }
+      if (isAdmin || user.uid === requesterUID) {
+        Alert.alert(
+          'Delete Request',
+          'Are you sure you want to delete this request?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: async () => {
+                const requestRef = doc(db, 'requests', id);
+                await deleteDoc(requestRef);
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      } else {
+        Alert.alert('Permission Denied', 'You can only delete your own requests.');
+      }
     } catch (err) {
       Alert.alert('Error', 'Failed to delete request. Please try again.');
       console.error('Delete request error:', err);
+    }
+  };
+
+  const handleRequestPress = (request: Request) => {
+    if (isAdmin) {
+      
+      router.push({
+        pathname: "/(drawer)/Add Requests",
+        params: { 
+          requestId: request.id,
+          isEditing: "true"
+        }
+      });
     }
   };
 
@@ -112,12 +142,7 @@ export default function RequestScreen() {
       title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       name.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesFilter = selectedFilter === 'All' || 
-      (selectedFilter === 'Closed' ? 
-        ['Closed', 'Resolved'].includes(request.status) : 
-        request.status === selectedFilter);
-    
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
   
   if (error) {
@@ -129,6 +154,7 @@ export default function RequestScreen() {
           onPress={() => {
             setError(null);
             setLoading(true);
+            fetchRequests();
           }}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
@@ -150,7 +176,7 @@ export default function RequestScreen() {
           placeholderTextColor="#666"
         />
       </View>
-
+      
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color="#106ebe" />
@@ -162,7 +188,8 @@ export default function RequestScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity 
               style={styles.requestCard} 
-              onLongPress={() => deleteRequest(item.id)}
+              onPress={() => handleRequestPress(item)}
+              onLongPress={() => deleteRequest(item.id, item.requesterUID)}
             >
               <View style={styles.requestHeader}>
                 <Text style={styles.requestTitle}>{item.title}</Text>
@@ -181,12 +208,15 @@ export default function RequestScreen() {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No requests found</Text>
+              <Text style={styles.emptyText}>
+                {isAdmin 
+                  ? "No requests found in the system" 
+                  : "You haven't submitted any requests yet"}
+              </Text>
             </View>
           }
         />
       )}
-
     </View>
   );
 }
