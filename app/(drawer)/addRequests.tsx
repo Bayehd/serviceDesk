@@ -342,7 +342,7 @@ export default function RequestDetailsScreen() {
               style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
             {(!isAdmin || !isEditMode) && (
-              <Text style={styles.infoText}>Only admins can assign technicians in edit mode</Text>
+              <Text style={styles.infoText}>Only admins can assign technicians</Text>
             )}
           </View>
 
@@ -364,7 +364,7 @@ export default function RequestDetailsScreen() {
               style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
             {(!isAdmin || !isEditMode) && (
-              <Text style={styles.infoText}>Only admins can change status in edit mode</Text>
+              <Text style={styles.infoText}>Only admins can change status</Text>
             )}
           </View>
 
@@ -386,7 +386,7 @@ export default function RequestDetailsScreen() {
               style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
             {(!isAdmin || !isEditMode) && (
-              <Text style={styles.infoText}>Only admins can change priority in edit mode</Text>
+              <Text style={styles.infoText}>Only admins can change priority</Text>
             )}
           </View>
           
@@ -404,8 +404,6 @@ export default function RequestDetailsScreen() {
               placeholder="Select site"
               zIndex={1000}
               listMode="MODAL"
-              disabled={!isAdmin || !isEditMode}
-              style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
           </View>
 
