@@ -40,9 +40,6 @@ export default function RequestDetailsScreen() {
   const [showRequesterSuggestions, setShowRequesterSuggestions] = useState<boolean>(false);
   const [filteredRequesters, setFilteredRequesters] = useState<string[]>([]);
   
-  console.log('User object:', user);
-  console.log('Edit mode:', isEditMode, 'Request ID:', requestId);
-  
   const possibleRequesters: string[] = [
     "knkansah",
     "Datsbe",
@@ -64,14 +61,14 @@ export default function RequestDetailsScreen() {
   const [requestDetails, setRequestDetails] = useState<RequestDetails>({
     requester: "",
     description: "",
-    technician: "", 
-    status: "Open", 
-    priority: "Low [ ** User only **]", 
+    technician: "",
+    status: "Open",
+    priority: "Low [ ** User only **]",
     site: "",
   });
 
   useEffect(() => {
-    if (requestId) {
+    if (requestId && isEditMode) {
       const fetchRequestDetails = async () => {
         try {
           setIsLoading(true);
@@ -87,10 +84,13 @@ export default function RequestDetailsScreen() {
               site: requestData.site || "",
               requesterUID: requestData.requesterUID || "",
             });
+          } else {
+            Alert.alert("Error", "Request not found");
+            router.back();
           }
         } catch (error) {
           console.error("Error fetching request details:", error);
-          Alert.alert("Error", "Failed to load request details");
+          Alert.alert("Error", `Failed to load request details: ${error.message}`);
         } finally {
           setIsLoading(false);
         }
@@ -105,7 +105,7 @@ export default function RequestDetailsScreen() {
         requesterUID: user.uid
       }));
     }
-  }, [requestId, user]);
+  }, [requestId, isEditMode, user]);
 
   const handleRequesterChange = (text: string) => {
     setRequestDetails(prev => ({ ...prev, requester: text }));
@@ -133,10 +133,10 @@ export default function RequestDetailsScreen() {
     { label: "Adeyemi A. Adeola", value: "Adeyemi A. Adeola" },
     { label: "Leonard Acquah", value: "Leonard Acquah" },
     { label: "Prince T. Okutu", value: "Prince T. Okutu" },
-    { label: "Joseph Appiah", value: "Joseph Appiah"}, 
-    { label: "Kwame Opare Adufo", value: "Kwame Opare Adufo" }, 
-    { label: "Joshua Sackey", value: "Joshua Sackey" }, 
-    { label: "Samuel E.Calys-Tagoe", value: "Samuel E.Calys-Tagoe" }, 
+    { label: "Joseph Appiah", value: "Joseph Appiah"},
+    { label: "Kwame Opare Adufo", value: "Kwame Opare Adufo" },
+    { label: "Joshua Sackey", value: "Joshua Sackey" },
+    { label: "Samuel E.Calys-Tagoe", value: "Samuel E.Calys-Tagoe" },
     { label: "Kamoli O. Ganiyu", value: "Kamoli O. Ganiyu" },
     { label: "Gentle Agoh", value: "Gentle Agoh" },
     { label: "Timothy Jide Adebisi", value: "Timothy Jide Adebisi" }
@@ -175,8 +175,8 @@ export default function RequestDetailsScreen() {
       requester: user?.email ? user.email.split('@')[0] : "",
       description: "",
       technician: "",
-      status: "Open", 
-      priority: "Low [ ** User only **]", 
+      status: "Open",
+      priority: "Low [ ** User only **]",
       site: "",
       requesterUID: user?.uid || "",
     });
@@ -184,50 +184,55 @@ export default function RequestDetailsScreen() {
 
   const handleSaveChanges = async () => {
     try {
-      if (!requestDetails.requester || !requestDetails.description) {
-        Alert.alert('Error', 'Please fill in all required fields');
+      if (!requestDetails.description) {
+        Alert.alert('Error', 'Description is required');
         return;
       }
 
       setIsSubmitting(true);
       
-      if (requestId) {
-        // Check if the current user is the owner or an admin
-        const canEdit = isAdmin || (user?.uid === requestDetails.requesterUID);
-        
-        if (!canEdit) {
-          Alert.alert('Error', 'You do not have permission to edit this request');
-          setIsSubmitting(false);
+      if (isEditMode && requestId) {
+        if (!isAdmin) {
+          Alert.alert('Error', 'Only admins can edit existing requests');
           return;
         }
-        
+
         const requestData = {
-          ...requestDetails,
-          id: requestId,
-          title: requestDetails.description.split('\n')[0].substring(0, 30),
-          name: requestDetails.requester,
-          updatedAt: new Date(),
+          technician: requestDetails.technician,
+          status: requestDetails.status,
+          priority: requestDetails.priority,
+          site: requestDetails.site,
           updatedBy: user?.uid || '',
         };
 
-        console.log('Updating request data:', requestData);
+        console.log('Updating request with data:', requestData);
         await updateRequest(requestId, requestData);
         
         Alert.alert("Success", "Request updated successfully", [
           { text: "OK", onPress: () => router.replace("/(drawer)/Requests") },
         ]);
       } else {
+        if (!requestDetails.requester) {
+          Alert.alert('Error', 'Requester is required');
+          return;
+        }
+
         const requestData = {
-          ...requestDetails,
+          requester: requestDetails.requester,
+          description: requestDetails.description,
           title: requestDetails.description.split('\n')[0].substring(0, 30),
           name: requestDetails.requester,
+          technician: requestDetails.technician,
+          status: "Open",
+          priority: requestDetails.priority,
+          site: requestDetails.site,
           requesterUID: user?.uid || '',
           requesterEmail: user?.email || '',
+          date: new Date(),
           createdAt: new Date(),
-          status: "Open"  // Ensure new requests are always set to "Open"
         };
 
-        console.log('Submitting new request data:', requestData);
+        console.log('Creating new request with data:', requestData);
         await createRequest(requestData);
         resetForm();
 
@@ -237,16 +242,11 @@ export default function RequestDetailsScreen() {
       }
     } catch (error) {
       console.error("Error saving request:", error);
-      Alert.alert("Error", "Failed to save request. Please try again.");
+      Alert.alert("Error", `Failed to save request: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Determine if user can edit this form (is admin or is the request creator)
-  const canEditAssignedFields = isAdmin;
-  const isOwner = user?.uid === requestDetails.requesterUID;
-  const canEditRequest = isAdmin || isOwner;
 
   if (isLoading) {
     return (
@@ -259,77 +259,68 @@ export default function RequestDetailsScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          {requestId && (
+          {isEditMode && (
             <View style={styles.editModeHeader}>
               <Text style={styles.editModeText}>
-                {isAdmin ? "Admin Edit Mode" : isOwner ? "Editing Your Request" : "Viewing Request"}
+                {isAdmin ? "Admin Edit Mode" : "Create New Request"}
               </Text>
             </View>
           )}
           
           <View style={styles.formField}>
             <Text style={styles.label}>Requester *</Text>
-            <View style={styles.requesterInputContainer}>
-              <TextInput
-                style={[styles.textInput, !canEditRequest && styles.disabledInput]}
-                placeholder="Enter requester name"
-                value={requestDetails.requester}
-                onChangeText={handleRequesterChange}
-                editable={canEditRequest}
-                onFocus={() => {
-                  if (!canEditRequest) return;
-                  
-                  // Show all options on focus if field is empty
-                  if (!requestDetails.requester) {
-                    setFilteredRequesters(possibleRequesters);
-                    setShowRequesterSuggestions(true);
-                  } else {
-                    // Filter based on current text
-                    const filtered = possibleRequesters.filter(
-                      item => item.toLowerCase().includes(requestDetails.requester.toLowerCase())
-                    );
-                    setFilteredRequesters(filtered);
-                    setShowRequesterSuggestions(filtered.length > 0);
-                  }
-                }}
-              />
-              {showRequesterSuggestions && canEditRequest && (
-                <View style={styles.suggestionsContainer}>
-                  <FlatList
-                    data={filteredRequesters}
-                    keyExtractor={(item) => item}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={styles.suggestionItem}
-                        onPress={() => selectRequester(item)}
-                      >
-                        <Text>{item}</Text>
-                      </TouchableOpacity>
-                    )}
-                    nestedScrollEnabled={true}
-                    style={{ maxHeight: 150 }}
-                  />
-                </View>
-              )}
-            </View>
+            <TextInput
+              style={[styles.textInput, isEditMode && styles.disabledInput]}
+              placeholder="Enter requester name"
+              value={requestDetails.requester}
+              onChangeText={handleRequesterChange}
+              editable={!isEditMode}
+              onFocus={() => {
+                if (isEditMode) return;
+                if (!requestDetails.requester) {
+                  setFilteredRequesters(possibleRequesters);
+                  setShowRequesterSuggestions(true);
+                } else {
+                  const filtered = possibleRequesters.filter(
+                    item => item.toLowerCase().includes(requestDetails.requester.toLowerCase())
+                  );
+                  setFilteredRequesters(filtered);
+                  setShowRequesterSuggestions(filtered.length > 0);
+                }
+              }}
+            />
+            {showRequesterSuggestions && !isEditMode && (
+              <View style={styles.suggestionsContainer}>
+                <FlatList
+                  data={filteredRequesters}
+                  keyExtractor={(item) => item}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.suggestionItem}
+                      onPress={() => selectRequester(item)}
+                    >
+                      <Text>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                  nestedScrollEnabled={true}
+                  style={{ maxHeight: 150 }}
+                />
+              </View>
+            )}
           </View>
 
           <Text style={styles.label}>Description *</Text>
           <TextInput
-            style={[
-              styles.textInput, 
-              styles.descriptionInput,
-              !canEditRequest && styles.disabledInput
-            ]}
+            style={[styles.textInput, styles.descriptionInput, isEditMode && styles.disabledInput]}
             placeholder="Enter request description"
             multiline
             value={requestDetails.description}
-            editable={canEditRequest}
+            editable={!isEditMode}
             onChangeText={(text) => setRequestDetails((prev) => ({ ...prev, description: text }))}
           />
 
@@ -347,11 +338,11 @@ export default function RequestDetailsScreen() {
               placeholder="Select technician"
               zIndex={4000}
               listMode="MODAL"
-              disabled={!canEditAssignedFields}
-              style={!canEditAssignedFields ? styles.disabledDropdown : {}}
+              disabled={!isAdmin || !isEditMode}
+              style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
-            {!canEditAssignedFields && (
-              <Text style={styles.infoText}>Only admins can assign technicians</Text>
+            {(!isAdmin || !isEditMode) && (
+              <Text style={styles.infoText}>Only admins can assign technicians in edit mode</Text>
             )}
           </View>
 
@@ -369,11 +360,11 @@ export default function RequestDetailsScreen() {
               placeholder="Select status"
               zIndex={3000}
               listMode="MODAL"
-              disabled={!canEditAssignedFields}
-              style={!canEditAssignedFields ? styles.disabledDropdown : {}}
+              disabled={!isAdmin || !isEditMode}
+              style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
-            {!canEditAssignedFields && (
-              <Text style={styles.infoText}>Only admins can change the status</Text>
+            {(!isAdmin || !isEditMode) && (
+              <Text style={styles.infoText}>Only admins can change status in edit mode</Text>
             )}
           </View>
 
@@ -391,11 +382,11 @@ export default function RequestDetailsScreen() {
               placeholder="Select priority"
               zIndex={2000}
               listMode="MODAL"
-              disabled={!canEditAssignedFields}
-              style={!canEditAssignedFields ? styles.disabledDropdown : {}}
-            /> 
-            {!canEditAssignedFields && (
-              <Text style={styles.infoText}>Only admins can change the priority</Text>
+              disabled={!isAdmin || !isEditMode}
+              style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
+            />
+            {(!isAdmin || !isEditMode) && (
+              <Text style={styles.infoText}>Only admins can change priority in edit mode</Text>
             )}
           </View>
           
@@ -413,27 +404,25 @@ export default function RequestDetailsScreen() {
               placeholder="Select site"
               zIndex={1000}
               listMode="MODAL"
-              disabled={!canEditRequest}
-              style={!canEditRequest ? styles.disabledDropdown : {}}
+              disabled={!isAdmin || !isEditMode}
+              style={!isAdmin || !isEditMode ? styles.disabledDropdown : {}}
             />
           </View>
 
-          {canEditRequest && (
-            <TouchableOpacity 
-              style={[styles.saveButton, isSubmitting && styles.disabledButton]} 
+          {(isAdmin && isEditMode) || !isEditMode ? (
+            <TouchableOpacity
+              style={[styles.saveButton, isSubmitting && styles.disabledButton]}
               onPress={handleSaveChanges}
               disabled={isSubmitting}
             >
               <Text style={styles.saveButtonText}>
-                {isSubmitting ? "Submitting..." : requestId ? "Update Request" : "Submit Request"}
+                {isSubmitting ? "Submitting..." : isEditMode ? "Update Request" : "Submit Request"}
               </Text>
             </TouchableOpacity>
-          )}
-          
-          {!canEditRequest && requestId && (
+          ) : (
             <View style={styles.viewOnlyNotice}>
               <Text style={styles.viewOnlyText}>
-                You are in view-only mode. Only the request owner or admins can edit this request.
+                Only admins can edit requests.
               </Text>
             </View>
           )}
@@ -444,30 +433,13 @@ export default function RequestDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f5f5f5" 
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5"
   },
   scrollView: {
-    flexGrow: 1, 
-    paddingBottom: 20 
-  },
-  header: {
-    backgroundColor: "#106ebe",
-    padding: 15, 
-    flexDirection: "row",
-    alignItems: "center" 
-  },
-  adminBanner: {
-    backgroundColor: "#1565c0",
-    padding: 8,
-    margin: 10,
-    borderRadius: 4,
-    alignItems: 'center',
-  },
-  adminBannerText: {
-    color: "white",
-    fontWeight: "bold",
+    flexGrow: 1,
+    paddingBottom: 20
   },
   editModeHeader: {
     backgroundColor: "#106ebe",
@@ -487,53 +459,49 @@ const styles = StyleSheet.create({
   formField: {
     marginBottom: 5,
   },
-  requesterInputContainer: {
-    position: 'relative',
-    marginBottom: 20,
-  },
   label: {
-    fontSize: 14, 
+    fontSize: 14,
     fontWeight: "bold",
-    color: "#333", 
-    marginBottom: 5 
+    color: "#333",
+    marginBottom: 5
   },
   textInput: {
     borderWidth: 1,
-    borderColor: "#ccc", 
-    borderRadius: 5, 
-    padding: 10, 
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
     backgroundColor: "#fff",
-    marginBottom: 10 
+    marginBottom: 10
   },
   disabledInput: {
     backgroundColor: "#f0f0f0",
     opacity: 0.7
   },
   descriptionInput: {
-    height: 100, 
-    textAlignVertical: "top" 
+    height: 100,
+    textAlignVertical: "top"
   },
   saveButton: {
-    backgroundColor: "#106ebe", 
-    padding: 15, 
-    borderRadius: 5, 
-    marginTop: 20, 
-    alignItems: "center" 
+    backgroundColor: "#106ebe",
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 20,
+    alignItems: "center"
   },
   saveButtonText: {
-    color: "white", 
-    fontSize: 16, 
-    fontWeight: "bold" 
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold"
   },
-  disabledButton: { 
-    backgroundColor: "#9DC2E8", 
-    opacity: 0.7 
+  disabledButton: {
+    backgroundColor: "#9DC2E8",
+    opacity: 0.7
   },
   disabledDropdown: {
     backgroundColor: "#f0f0f0",
     opacity: 0.7
   },
-  suggestionsContainer: { 
+  suggestionsContainer: {
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ccc",
@@ -541,7 +509,7 @@ const styles = StyleSheet.create({
     marginTop: -5,
     width: '100%',
     position: 'absolute',
-    top: 45, 
+    top: 45,
     left: 0,
     shadowColor: "#000",
     shadowOffset: {
@@ -551,7 +519,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    zIndex: 9999, 
+    zIndex: 9999,
   },
   suggestionItem: {
     padding: 10,

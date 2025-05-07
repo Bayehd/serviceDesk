@@ -1,27 +1,27 @@
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  query, 
-  orderBy, 
-  where, 
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  where,
   onSnapshot,
   serverTimestamp,
   addDoc,
   getDoc,
   DocumentData,
-  Timestamp
+  Timestamp,
+  FieldValue,
 } from 'firebase/firestore';
 import { db } from './lib/config/firebase';
 
 const COLLECTION_NAME = 'requests';
 
-// Define a proper type for the request data
 export interface RequestData {
   id?: string;
-  requester: string;
-  description: string;
+  requester?: string;
+  description?: string;
   technician?: string;
   status?: string;
   priority?: string;
@@ -30,11 +30,10 @@ export interface RequestData {
   name?: string;
   requesterUID?: string;
   requesterEmail?: string;
-  createdAt?: Date | Timestamp;
-  updatedAt?: Date | Timestamp;
+  createdAt?: Date | Timestamp | FieldValue;
+  updatedAt?: Date | Timestamp | FieldValue;
   updatedBy?: string;
-  date?: Date | Timestamp;
-  [key: string]: any; // Allow for other properties
+  date?: Date | Timestamp | FieldValue;
 }
 
 /**
@@ -51,11 +50,11 @@ export const createRequest = async (requestData: RequestData): Promise<string> =
     const requestRef = doc(collection(db, COLLECTION_NAME));
     const requestId = requestRef.id;
     
-    const fullRequestData = {
+    const fullRequestData: RequestData = {
       id: requestId,
       ...requestData,
       status: requestData.status || 'Open',
-      priority: requestData.priority || 'Normal',
+      priority: requestData.priority || 'Low [ ** User only **]',
       date: serverTimestamp(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -104,14 +103,21 @@ export const updateRequest = async (requestId: string, requestData: RequestData)
   try {
     const requestRef = doc(db, COLLECTION_NAME, requestId);
     
-    const updatedData = {
-      ...requestData,
+    const allowedFields: (keyof RequestData)[] = ['technician', 'status', 'priority', 'site', 'updatedBy', 'updatedAt'];
+    const updatedData: Partial<RequestData> = {
       updatedAt: serverTimestamp(),
     };
     
+    for (const key of allowedFields) {
+      if (key in requestData && requestData[key] !== undefined) {
+        updatedData[key] = requestData[key];
+      }
+    }
+    
+    console.log('Updating request with data:', updatedData);
     await setDoc(requestRef, updatedData, { merge: true });
   } catch (error) {
-    console.error('Error updating request:', error);
+    console.error('Error updating request:', error, { requestId, requestData });
     throw error;
   }
 };
@@ -140,14 +146,14 @@ export const deleteRequest = async (requestId: string): Promise<void> => {
  * @returns {Function} - Unsubscribe function to stop listening for updates
  */
 export const getAllRequests = (
-  onSuccess: (requests: RequestData[]) => void, 
+  onSuccess: (requests: RequestData[]) => void,
   onError: (error: any) => void
 ): Function => {
   try {
     const requestsRef = collection(db, COLLECTION_NAME);
     const q = query(requestsRef, orderBy('date', 'desc'));
     
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
         const requests = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -165,7 +171,7 @@ export const getAllRequests = (
   } catch (error) {
     console.error('Error setting up request listener:', error);
     onError(error);
-    return () => {}; 
+    return () => {};
   }
 };
 
@@ -178,14 +184,13 @@ export const getAllRequests = (
  * @returns {Function} - Unsubscribe function to stop listening for updates
  */
 export const getFilteredRequests = (
-  filters: { status?: string; priority?: string; technician?: string; }, 
-  onSuccess: (requests: RequestData[]) => void, 
+  filters: { status?: string; priority?: string; technician?: string; },
+  onSuccess: (requests: RequestData[]) => void,
   onError: (error: any) => void
 ): Function => {
   try {
     const requestsRef = collection(db, COLLECTION_NAME);
     
-    // Build query constraints
     const queryConstraints = [];
     
     if (filters.status) {
@@ -204,7 +209,7 @@ export const getFilteredRequests = (
     
     const q = query(requestsRef, ...queryConstraints);
     
-    const unsubscribe = onSnapshot(q, 
+    const unsubscribe = onSnapshot(q,
       (snapshot) => {
         const requests = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -222,6 +227,6 @@ export const getFilteredRequests = (
   } catch (error) {
     console.error('Error setting up filtered request listener:', error);
     onError(error);
-    return () => {}; 
+    return () => {};
   }
 };

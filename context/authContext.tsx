@@ -2,8 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useMemo } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, usersCollection } from '@/lib';
-import { getDocs, query, where } from 'firebase/firestore';
-
+import { getDocs, query, where, setDoc, doc } from 'firebase/firestore';
 
 type UserRole = 'admin' | 'user';
 
@@ -11,7 +10,7 @@ export type User = {
   uid: string;
   email: string;
   role: UserRole;
-createdAt?:string
+  createdAt?: string;
 };
 
 interface AuthContextType {
@@ -41,10 +40,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     const checkAuth = async () => {
       try {
-
         const storedUserData = await AsyncStorage.getItem('userData');
         
         if (storedUserData) {
@@ -55,42 +52,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error("Error retrieving stored user data:", error);
       }
 
-
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
           try {
-          
             const q = query(usersCollection, where("uid", "==", firebaseUser.uid));
             const querySnapshot = await getDocs(q);
             
-           
             let userRole: UserRole = 'user';
-            
+            let userData: User;
+
             if (!querySnapshot.empty) {
-              const userData = querySnapshot.docs[0].data();
-              if (userData.role === 'admin' || userData.role === 'user') {
-                userRole = userData.role;
+              const userDoc = querySnapshot.docs[0].data();
+              if (userDoc.role === 'admin' || userDoc.role === 'user') {
+                userRole = userDoc.role;
               }
+              userData = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? '',
+                role: userRole,
+                createdAt: firebaseUser.metadata.creationTime,
+              };
+            } else {
+              // Create a new user document with default role 'user'
+              userData = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? '',
+                role: 'user',
+                createdAt: firebaseUser.metadata.creationTime,
+              };
+              await setDoc(doc(usersCollection, firebaseUser.uid), {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email ?? '',
+                role: 'user',
+                createdAt: firebaseUser.metadata.creationTime,
+              });
             }
-            
-            const userData: User = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email ?? '',
-              role: userRole,
-            };
             
             setUser(userData);
             await AsyncStorage.setItem('userData', JSON.stringify(userData));
           } catch (error) {
-            console.error("Error fetching user role:", error);
-         
+            console.error("Error fetching or creating user role:", error);
+            // Fallback: Allow sign-in with default role
             const userData: User = {
               uid: firebaseUser.uid,
-              email: firebaseUser.email??  '',
+              email: firebaseUser.email ?? '',
               role: 'user',
               createdAt: firebaseUser.metadata.creationTime,
             };
             setUser(userData);
+            await AsyncStorage.setItem('userData', JSON.stringify(userData));
           }
         } else {
           setUser(null);
@@ -108,20 +118,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async (): Promise<void> => {
     try {
-   
       await firebaseSignOut(auth);
-      
-
       await AsyncStorage.removeItem('userData');
-      
-
       setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);
       throw error;
     }
   };
-
 
   const value: AuthContextType = useMemo(() => ({
     user,

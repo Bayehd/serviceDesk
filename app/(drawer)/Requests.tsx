@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, where } from 'firebase/firestore';
+import { collection, onSnapshot, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../lib/config/firebase';
 import { useAuth } from '../../context/authContext';
 import { useRouter } from 'expo-router';
@@ -15,7 +15,7 @@ interface Request {
   title: string;
   technician: string;
   priority: string;
-  date: any; 
+  date: any;
   status: 'Open' | 'Closed' | 'Resolved' | 'Unassigned';
   description?: string;
   site?: string;
@@ -49,7 +49,7 @@ export default function RequestScreen() {
       requestsQuery = query(requestsRef, orderBy("date", "desc"));
     } else {
       requestsQuery = query(
-        requestsRef, 
+        requestsRef,
         where("requesterUID", "==", user.uid),
         orderBy("date", "desc")
       );
@@ -108,12 +108,11 @@ export default function RequestScreen() {
 
   const handleRequestPress = (request: Request) => {
     if (isAdmin) {
-      
       router.push({
-        pathname: "/(drawer)/Add Requests",
-        params: { 
+        pathname: "/(drawer)/addRequests",
+        params: {
           requestId: request.id,
-          isEditing: "true"
+          edit: "true"
         }
       });
     }
@@ -138,7 +137,7 @@ export default function RequestScreen() {
     const title = request.title || '';
     const name = request.name || '';
     
-    const matchesSearch = searchQuery.toLowerCase() === '' || 
+    const matchesSearch = searchQuery.toLowerCase() === '' ||
       title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       name.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -149,7 +148,7 @@ export default function RequestScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.retryButton}
           onPress={() => {
             setError(null);
@@ -186,8 +185,8 @@ export default function RequestScreen() {
           data={filteredRequests}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.requestCard} 
+            <TouchableOpacity
+              style={styles.requestCard}
               onPress={() => handleRequestPress(item)}
               onLongPress={() => deleteRequest(item.id, item.requesterUID)}
             >
@@ -209,8 +208,8 @@ export default function RequestScreen() {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                {isAdmin 
-                  ? "No requests found in the system" 
+                {isAdmin
+                  ? "No requests found in the system"
                   : "You haven't submitted any requests yet"}
               </Text>
             </View>
@@ -232,7 +231,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: "#106ebe", 
+    backgroundColor: "#106ebe",
     padding: 15,
     paddingTop: Platform.OS === 'ios' ? 50 : 15,
     flexDirection: 'row',
@@ -305,9 +304,9 @@ const styles = StyleSheet.create({
   },
   technician: {
     fontSize: 14,
-    color: "#333", 
+    color: "#333",
     marginBottom: 4,
-    fontWeight: "500", 
+    fontWeight: "500",
   },
   requestDate: {
     fontSize: 12,

@@ -26,7 +26,7 @@ export default function  DrawerLayout() {
 
                 <Drawer.Screen name= "addRequests" 
                 options = {{ 
-                    drawerLabel : " addRequests", 
+                    drawerLabel : " Add Requests", 
                     headerTitle : "Request Details",
                     drawerIcon: ({ size, color}) => <AntDesign name="edit"  size={size} />,
                 }}
