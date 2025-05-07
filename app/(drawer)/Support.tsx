@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const Page = () => {
     return (
        <SafeAreaView>
-        <Text style = {style.text}>
+        <Text style = {styles.text}>
              Call Service Desk Phone Number : " 1188 "
         </Text>
         <Image
@@ -22,10 +22,10 @@ const Page = () => {
        </SafeAreaView>
     )
 }
- 
+
 export default Page;
 
-const style = StyleSheet.create({
+const styles = StyleSheet.create({
     text:{
         fontWeight: "bold", 
         marginTop: 40,

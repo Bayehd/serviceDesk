@@ -264,14 +264,6 @@ export default function RequestDetailsScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.content}>
-          {isEditMode && (
-            <View style={styles.editModeHeader}>
-              <Text style={styles.editModeText}>
-                {isAdmin ? "Admin Edit Mode" : "Create New Request"}
-              </Text>
-            </View>
-          )}
-          
           <View style={styles.formField}>
             <Text style={styles.label}>Requester *</Text>
             <TextInput
@@ -438,18 +430,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 1,
     paddingBottom: 20
-  },
-  editModeHeader: {
-    backgroundColor: "#106ebe",
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  editModeText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
   },
   content: {
     padding: 15,
